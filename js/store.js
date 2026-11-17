@@ -2,7 +2,11 @@
 class Store {
   constructor() {
     this.storageKey = "BON_PRIX_SUIV_STATE_V3";
-    this.authKey = "BON_PRIX_SUIV_AUTH_USER";
+    this.authKey = "BON_PRIX_SUIV_AUTH_SESSION_V2";
+    // Clear legacy auto-login key so app never logs in automatically
+    try {
+      localStorage.removeItem("BON_PRIX_SUIV_AUTH_USER");
+    } catch (e) {}
     this.state = this.loadState();
     this.currentUser = this.loadCurrentUser();
     this.listeners = [];
@@ -15,6 +19,13 @@ class Store {
         const parsed = JSON.parse(saved);
         if (!parsed.users || parsed.users.length === 0) {
           parsed.users = JSON.parse(JSON.stringify(DEFAULT_DATA.users));
+        } else {
+          // Ensure admin user has Google email configured
+          const adminUser = parsed.users.find(u => u.role === "admin");
+          if (adminUser && !adminUser.email) {
+            adminUser.email = "noureddinehadjhamed1992@gmail.com";
+            adminUser.authProvider = "google";
+          }
         }
         if (!parsed.deliveryRates || parsed.deliveryRates.length === 0) {
           parsed.deliveryRates = JSON.parse(JSON.stringify(DEFAULT_DATA.deliveryRates));
@@ -48,8 +59,8 @@ class Store {
     } catch (e) {
       console.error("Error reading auth user", e);
     }
-    // Default to admin for first-time direct convenience, but allow logging out/switching
-    return this.getUserByRole("admin");
+    // No auto-login: user must authenticate
+    return null;
   }
 
   setCurrentUser(user) {
@@ -87,8 +98,8 @@ class Store {
 
   resetDemo() {
     this.state = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    this.currentUser = this.getUserByRole("admin");
-    localStorage.setItem(this.authKey, JSON.stringify(this.currentUser));
+    this.currentUser = null;
+    localStorage.removeItem(this.authKey);
     this.saveState();
   }
 
@@ -108,6 +119,12 @@ class Store {
     return this.getUsers().find(u => u.phone === phone);
   }
 
+  getUserByEmail(email) {
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    return this.getUsers().find(u => u.email && u.email.toLowerCase() === cleanEmail);
+  }
+
   getUserByRole(role) {
     return this.getUsers().find(u => u.role === role);
   }
@@ -117,7 +134,7 @@ class Store {
   }
 
   // Register a new user (initially marked as pending approval by admin)
-  registerUser({ name, phone, password, note = "" }) {
+  registerUser({ name, phone, email = "", password, note = "" }) {
     if (!name || !phone || !password) {
       throw new Error("يرجى ملء جميع الحقول المطلوبة (الاسم، الهاتف، وكلمة المرور)");
     }
@@ -133,6 +150,7 @@ class Store {
       id,
       name: name.trim(),
       phone: cleanPhone,
+      email: email.trim().toLowerCase(),
       password: password.trim(),
       role: "pending", // Waiting for Owner classification!
       status: "pending",
@@ -145,17 +163,94 @@ class Store {
     return newUser;
   }
 
-  // Login authentication
-  loginUser(phone, password) {
-    const cleanPhone = phone.trim().replace(/\s+/g, '');
-    const user = this.getUserByPhone(cleanPhone);
+  // Login authentication (supports Phone OR Google Email)
+  loginUser(identifier, password) {
+    const cleanId = identifier.trim();
+    let user = null;
+
+    if (cleanId.includes("@")) {
+      user = this.getUserByEmail(cleanId);
+    } else {
+      user = this.getUserByPhone(cleanId.replace(/\s+/g, ''));
+    }
 
     if (!user || user.password !== password.trim()) {
-      throw new Error("رقم الهاتف أو كلمة المرور غير صحيحة!");
+      throw new Error("البريد الإلكتروني / رقم الهاتف أو كلمة المرور غير صحيحة!");
     }
 
     this.setCurrentUser(user);
     return user;
+  }
+
+  // Google Sign-In for Admin (Owner), Sales Reps, and Delivery Drivers
+  loginWithGoogle({ email, name = "", phone = "", password = "" }) {
+    const cleanEmail = (email || "").trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      throw new Error("يرجى إدخال بريد Google الإلكتروني الصحيح (مثال: name@gmail.com)");
+    }
+
+    const adminUser = this.getUserByRole("admin");
+    // 1. Check if matches Admin's Google account
+    if (
+      adminUser &&
+      ((adminUser.email && adminUser.email.toLowerCase() === cleanEmail) ||
+        cleanEmail === "noureddinehadjhamed1992@gmail.com")
+    ) {
+      if (password.trim() !== adminUser.password) {
+        throw new Error("كلمة مرور المدير لحساب Google غير صحيحة!");
+      }
+      adminUser.email = cleanEmail;
+      adminUser.authProvider = "google";
+      this.saveState();
+      this.setCurrentUser(adminUser);
+      return adminUser;
+    }
+
+    // 2. Check if an existing user (Rep / Driver / Pending) has this Google email
+    const existingUser = this.getUserByEmail(cleanEmail);
+    if (existingUser) {
+      if (existingUser.password && existingUser.password !== password.trim()) {
+        throw new Error("كلمة المرور غير صحيحة لهذا الحساب!");
+      }
+      this.setCurrentUser(existingUser);
+      return existingUser;
+    }
+
+    // 3. New user signing in with Google -> create a 'pending' account waiting for Admin role classification!
+    const derivedName = name.trim() || cleanEmail.split("@")[0];
+    const cleanPhone = phone.trim().replace(/\s+/g, '') || cleanEmail;
+    const id = "USR-" + Math.floor(100 + Math.random() * 900);
+    const newPendingUser = {
+      id,
+      name: derivedName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      password: password.trim() || "123",
+      authProvider: "google",
+      role: "pending",
+      status: "pending",
+      note: `تسجيل دخول جديد عبر حساب Google (${cleanEmail}) بانتظار تصنيف الدور من المدير`,
+      createdAt: new Date().toISOString()
+    };
+
+    this.state.users.unshift(newPendingUser);
+    this.saveState();
+    this.setCurrentUser(newPendingUser);
+    return newPendingUser;
+  }
+
+  updateAdminAccount({ name, email, phone, password }) {
+    const adminUser = this.getUserByRole("admin");
+    if (!adminUser) return null;
+    if (name) adminUser.name = name.trim();
+    if (email) adminUser.email = email.trim().toLowerCase();
+    if (phone) adminUser.phone = phone.trim();
+    if (password) adminUser.password = password.trim();
+    this.saveState();
+    if (this.currentUser && this.currentUser.id === adminUser.id) {
+      this.setCurrentUser(adminUser);
+    }
+    return adminUser;
   }
 
   // Owner / Admin Approval & Role Classification

@@ -5,8 +5,10 @@ const DEFAULT_DATA = {
     {
       id: "USR-001",
       name: "المدير العام (صاحب المتجر)",
+      email: "noureddinehadjhamed1992@gmail.com",
       phone: "0550000000",
       password: "admin",
+      authProvider: "google",
       role: "admin", // admin, rep, driver, pending
       status: "active", // active, pending, rejected
       linkedId: null,

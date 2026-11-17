@@ -1,4 +1,4 @@
-// Main Application Controller & UI Logic with Full RBAC Security, Login, Role Approvals & AI Features
+﻿// Main Application Controller & UI Logic with Full RBAC Security, Login, Role Approvals & AI Features
 let authTab = "login"; // 'login' or 'register'
 let activeTab = "dashboard"; // admin tabs: dashboard, products, orders, reps, deliveryRates, users, driverLog
                              // rep tabs: newOrder, catalog, myOrders
@@ -121,48 +121,60 @@ function renderAuthScreen() {
           ${authTab === 'login' ? renderLoginForm() : renderRegisterForm()}
         </div>
 
-        <!-- Demo Accounts Quick Switcher (For Owner Testing Convenience) -->
-        <div class="bg-slate-50 p-4 border-t border-slate-100 text-center">
-          <span class="text-[11px] font-bold text-slate-500 block mb-2">⚡ تجربة الدخول السريع للحسابات:</span>
-          <div class="flex items-center justify-center gap-1.5 flex-wrap">
-            <button onclick="quickLogin('0550000000', 'admin')" class="px-2.5 py-1 text-[11px] bg-red-600 text-white rounded-lg font-bold hover:bg-red-700">👑 المدير</button>
-            <button onclick="quickLogin('0551234567', '123')" class="px-2.5 py-1 text-[11px] bg-pink-600 text-white rounded-lg font-bold hover:bg-pink-700">🌸 مندوبة</button>
-            <button onclick="quickLogin('0555987654', '123')" class="px-2.5 py-1 text-[11px] bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700">🚚 عامل توصيل</button>
-            <button onclick="quickLogin('0779998877', '123')" class="px-2.5 py-1 text-[11px] bg-amber-500 text-white rounded-lg font-bold hover:bg-amber-600">⏳ حساب قيد الانتظار</button>
-          </div>
-        </div>
+        
 
       </div>
 
       <p class="text-xs text-slate-400 mt-4 text-center">تطبيق آمن مع نظام صلاحيات صارم - لا يمكن لأي مستخدم رؤية بيانات غير مخصصة له.</p>
     </div>
+    <div id="modal-container"></div>
+    <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2"></div>
   `;
 }
 
 function renderLoginForm() {
   return `
-    <form onsubmit="handleLoginSubmit(event)" class="space-y-4 text-xs">
-      <div>
-        <label class="block font-bold text-slate-700 mb-1">رقم الهاتف:</label>
-        <div class="relative">
-          <input type="tel" id="login-phone" required placeholder="05 / 06 / 07 ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 font-mono text-slate-800 outline-none focus:border-red-600" />
-          <i data-lucide="phone" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
-        </div>
-      </div>
-
-      <div>
-        <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
-        <div class="relative">
-          <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-slate-800 outline-none focus:border-red-600" />
-          <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
-        </div>
-      </div>
-
-      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 mt-2">
-        <i data-lucide="log-in" class="w-4 h-4"></i>
-        دخول إلى حسابي
+    <div class="space-y-4 text-xs">
+      <!-- Google Sign-In Button for Admin -->
+      <button type="button" onclick="openGoogleLoginModal()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-blue-500 font-extrabold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2.5">
+        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+        </svg>
+        <span>الدخول عبر حساب Google (خاص بالمدير 👑)</span>
       </button>
-    </form>
+
+      <div class="relative flex py-1 items-center">
+        <div class="flex-grow border-t border-slate-200"></div>
+        <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-bold">أو الدخول برقم الهاتف / البريد</span>
+        <div class="flex-grow border-t border-slate-200"></div>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف أو بريد Google:</label>
+          <div class="relative">
+            <input type="text" id="login-phone" required placeholder="05 / 06 / 07 أو بريد Gmail..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 font-mono text-slate-800 outline-none focus:border-red-600" />
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
+          <div class="relative">
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-slate-800 outline-none focus:border-red-600" />
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 mt-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          دخول إلى حسابي
+        </button>
+      </form>
+    </div>
   `;
 }
 
@@ -308,6 +320,75 @@ function quickLogin(phone, password) {
 function handleLogout() {
   window.store.logout();
   renderApp();
+}
+
+function openGoogleLoginModal() {
+  const container = document.getElementById("modal-container");
+  if (!container) return;
+
+  const adminUser = window.store.getUserByRole("admin");
+  const defaultEmail = (adminUser && adminUser.email) ? adminUser.email : "noureddinehadjhamed1992@gmail.com";
+
+  container.innerHTML = `
+    <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+      <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+        <div class="text-center space-y-2">
+          <div class="w-12 h-12 mx-auto rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
+            <svg class="w-6 h-6" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+              <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+            </svg>
+          </div>
+          <h3 class="text-base font-black text-slate-900">تسجيل الدخول عبر Google</h3>
+          <p class="text-[11px] text-slate-500">للمدير العام 👑 أو للمندوبات وعامل التوصيل (مع تصنيف الدور من المدير)</p>
+        </div>
+
+        <form onsubmit="handleGoogleLoginSubmit(event)" class="space-y-3.5 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">بريد Google الإلكتروني (Gmail):</label>
+            <input type="email" id="google-login-email" required value="${defaultEmail}" placeholder="example@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-slate-800 outline-none focus:border-blue-600" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
+            <input type="password" id="google-login-password" required placeholder="كلمة مرور الحساب (للمدير: admin)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 outline-none focus:border-blue-600" />
+          </div>
+
+          <div class="pt-2 flex gap-2">
+            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-sm transition-colors">
+              متابعة بحساب Google
+            </button>
+            <button type="button" onclick="closeModal()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">
+              إلغاء
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleGoogleLoginSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById("google-login-email").value;
+  const password = document.getElementById("google-login-password").value;
+
+  try {
+    const user = window.store.loginWithGoogle({ email, password });
+    closeModal();
+    renderApp();
+    if (user.role === "admin") {
+      showToast(`تم تسجيل دخول المدير عبر Google بنجاح! مرحباً ${user.name} 👑`);
+    } else if (user.status === "pending" || user.role === "pending") {
+      showToast(`تم تسجيل حسابك عبر Google وإرسال إشعار للمدير لتصنيف دورك ⏳`);
+    } else {
+      showToast(`تم تسجيل الدخول عبر Google بنجاح! مرحباً ${user.name} ✨`);
+    }
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 // ==========================================
@@ -485,6 +566,7 @@ function renderAdminTabContent() {
 // 1.1 Admin Users & Approval Tab (تصنيف أدوار المستخدمين الجدد)
 function renderAdminUsersTab() {
   const users = window.store.getUsers();
+  const adminUser = window.store.getUserByRole("admin") || {};
   const pendingUsers = window.store.getPendingUsers();
   const activeUsers = users.filter(u => u.status === "active" && u.role !== "admin");
 
@@ -494,6 +576,22 @@ function renderAdminUsersTab() {
       <div>
         <h3 class="text-base font-bold text-slate-900">إدارة المستخدمين والأمان وتصنيف الأدوار 🔐</h3>
         <p class="text-xs text-slate-500">عندما يسجل أي شخص جديد، يظهر طلبه هنا للمراجعة. أنت الوحيد الذي يحدد هل هو (مندوبة مبيعات) أو (عامل توصيل)، ويظهر له فقط ما يخصه.</p>
+      </div>
+
+      <!-- ADMIN GOOGLE ACCOUNT SETTINGS -->
+      <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+            <span class="text-lg">👑</span>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">حساب المدير المرتبط بـ Google</h4>
+            <p class="text-[11px] text-slate-600 font-mono mt-0.5">${adminUser.email || 'noureddinehadjhamed1992@gmail.com'} | الهاتف: ${adminUser.phone || '0550000000'}</p>
+          </div>
+        </div>
+        <button onclick="updateAdminGooglePrompt()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl self-start sm:self-center transition-colors">
+          تعديل بريد Google / كلمة مرور المدير
+        </button>
       </div>
 
       <!-- SECTION 1: PENDING REGISTRATION REQUESTS -->
@@ -603,6 +701,21 @@ function renderAdminUsersTab() {
 
     </div>
   `;
+}
+
+function updateAdminGooglePrompt() {
+  const adminUser = window.store.getUserByRole("admin") || {};
+  const newEmail = prompt("أدخل بريد Google (Gmail) الخاص بالمدير:", adminUser.email || "noureddinehadjhamed1992@gmail.com");
+  if (newEmail === null) return;
+  const newPassword = prompt("أدخل كلمة مرور المدير الجديدة (أو اتركها كما هي):", adminUser.password || "admin");
+  if (newPassword === null) return;
+
+  window.store.updateAdminAccount({
+    email: newEmail,
+    password: newPassword
+  });
+  showToast("تم تحديث بيانات حساب المدير على Google بنجاح ✅");
+  renderApp();
 }
 
 function approveUserAsRepPrompt(userId, name) {
@@ -2968,3 +3081,4 @@ function confirmResetDemo() {
     showToast("تمت استعادة البيانات التجريبية الافتراضية.");
   }
 }
+
