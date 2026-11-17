@@ -1,0 +1,16 @@
+{
+  "name": "Bon Prix Suiv - تسيير المخزون والمندوبات والتوصيل",
+  "short_name": "Bon Prix Suiv",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#e11d48",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
