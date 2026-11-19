@@ -57,7 +57,7 @@
   <script src="./js/app.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDGYWNwsxjzyWzCYeMJD0BLoa4a7D3Vgkk",
@@ -72,7 +72,11 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   window.db = db;
-  
+  window.fbSync = { db, doc, getDoc, setDoc, onSnapshot };
+
+  if (window.store && typeof window.store.initCloudSync === "function") {
+    window.store.initCloudSync();
+  }
   console.log("تم الاتصال بقاعدة بيانات Firebase بنجاح!");
 </script>
 </body>

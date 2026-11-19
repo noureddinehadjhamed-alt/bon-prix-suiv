@@ -394,6 +394,7 @@ function quickLogin(phone, password) {
 }
 
 function handleLogout() {
+  authTab = "login";
   window.store.logout();
   renderApp();
 }
@@ -501,6 +502,17 @@ function renderHeader(currentUser) {
           <!-- User Info & Secure Actions -->
           <div class="flex items-center gap-2">
             
+            <!-- Cloud Sync Status Badge -->
+            <span title="حالة المزامنة السحابية بين الأجهزة" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
+              window.store.cloudStatus === 'synced'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : window.store.cloudStatus === 'connecting'
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            }">
+              ${window.store.cloudStatus === 'synced' ? '☁️ متزامن سحابياً' : window.store.cloudStatus === 'connecting' ? '⏳ جاري المزامنة' : '💾 وضع محلي'}
+            </span>
+
             <!-- Admin Notifications Badge -->
             ${currentUser.role === 'admin' && pendingUsersCount > 0 ? `
               <button onclick="switchTab('users')" class="bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1 shadow-sm pulse-badge">
@@ -523,6 +535,12 @@ function renderHeader(currentUser) {
                 ${currentUser.role === 'admin' ? 'المدير' : currentUser.role === 'rep' ? 'مندوبة' : 'عامل توصيل'}
               </span>
             </div>
+
+            <!-- Change Password & PIN Button (Available for Rep, Driver, and Admin) -->
+            <button onclick="openChangePasswordModal()" title="تغيير كلمة السر ورمز PIN" class="p-2 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-1 text-xs font-bold border border-slate-200">
+              <i data-lucide="key-round" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">كلمة السر</span>
+            </button>
 
             <!-- Logout Button -->
             <button onclick="handleLogout()" title="تسجيل الخروج" class="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors flex items-center gap-1 text-xs font-bold border border-slate-200">
@@ -783,10 +801,15 @@ function renderAdminUsersTab() {
                   <td class="p-3 font-mono text-slate-400 text-[10px]">
                     ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : '-'}
                   </td>
-                  <td class="p-3 text-center">
-                    <button onclick="confirmDeleteUser('${u.id}')" title="إلغاء/حذف الحساب" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                      <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+                  <td class="p-3 text-center whitespace-nowrap">
+                    <div class="flex items-center justify-center gap-1">
+                      <button onclick="openAdminResetPasswordModal('${u.id}')" title="إعادة تعيين كلمة السر / PIN" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <i data-lucide="key-round" class="w-4 h-4"></i>
+                      </button>
+                      <button onclick="confirmDeleteUser('${u.id}')" title="إلغاء/حذف الحساب" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               `).join('')}
@@ -872,6 +895,122 @@ function confirmDeleteUser(userId) {
   window.store.deleteUser(userId);
   showToast("تم حذف الحساب.");
   renderApp();
+}
+
+// ==========================================
+// CHANGE PASSWORD & PIN MODALS (للجميع + إعادة تعيين من المدير)
+// ==========================================
+function openChangePasswordModal() {
+  const user = window.store.getCurrentUser();
+  if (!user) return;
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 class="text-sm font-bold text-slate-900">🔐 تغيير كلمة السر ورمز الأمان (PIN)</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+
+        <form onsubmit="handleChangePasswordSubmit(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كلمة السر الحالية:</label>
+            <input type="password" id="cp-current" required placeholder="أدخل كلمة السر الحالية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كلمة السر الجديدة:</label>
+            <input type="password" id="cp-new" required minlength="3" placeholder="3 أحرف أو أرقام على الأقل" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">تأكيد كلمة السر الجديدة:</label>
+            <input type="password" id="cp-confirm" required minlength="3" placeholder="أعد كتابة كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رمز الأمان الشخصي الجديد (PIN من 4 أرقام - اختياري):</label>
+            <input type="password" id="cp-pin" pattern="\\d{4}" maxlength="4" placeholder="اتركه فارغاً للإبقاء على الرمز الحالي (${user.securityPin || '1234'})" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-blue-600" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">حفظ كلمة السر الجديدة</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleChangePasswordSubmit(e) {
+  e.preventDefault();
+  const user = window.store.getCurrentUser();
+  if (!user) return;
+  const currentPass = document.getElementById("cp-current").value;
+  const newPass = document.getElementById("cp-new").value;
+  const confirmPass = document.getElementById("cp-confirm").value;
+  const newPin = document.getElementById("cp-pin").value;
+
+  if (newPass.trim() !== confirmPass.trim()) {
+    alert("كلمة السر الجديدة وتأكيدها غير متطابقتين!");
+    return;
+  }
+
+  try {
+    window.store.changeOwnPassword(user.id, currentPass, newPass, newPin);
+    closeModal();
+    showToast("تم تغيير كلمة السر بنجاح 🔐");
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function openAdminResetPasswordModal(userId) {
+  const targetUser = window.store.getUserById(userId);
+  if (!targetUser) return;
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 class="text-sm font-bold text-slate-900">🔑 إعادة تعيين كلمة السر لـ: ${targetUser.name}</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+
+        <form onsubmit="handleAdminResetPasswordSubmit(event, '${targetUser.id}')" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">كلمة السر الجديدة:</label>
+            <input type="text" id="arp-pass" required minlength="3" placeholder="أدخل كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600 font-mono" />
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رمز PIN الجديد (4 أرقام - اختياري):</label>
+            <input type="text" id="arp-pin" pattern="\\d{4}" maxlength="4" value="${targetUser.securityPin || '1234'}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-blue-600" />
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md">تحديث كلمة السر</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleAdminResetPasswordSubmit(e, userId) {
+  e.preventDefault();
+  const newPass = document.getElementById("arp-pass").value;
+  const newPin = document.getElementById("arp-pin").value;
+  try {
+    window.store.adminResetUserPassword(userId, newPass, newPin);
+    closeModal();
+    showToast("تم إعادة تعيين كلمة السر بنجاح 🔑");
+    renderApp();
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
 // 1.2 Admin Dashboard Tab

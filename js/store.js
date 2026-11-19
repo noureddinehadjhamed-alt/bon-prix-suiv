@@ -13,6 +13,8 @@ class Store {
     this.state = this.loadState();
     this.currentUser = this.loadCurrentUser();
     this.listeners = [];
+    this.cloudStatus = "connecting"; // connecting, synced, offline
+    this._isApplyingRemote = false;
   }
 
   loadState() {
@@ -54,8 +56,95 @@ class Store {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.state));
       this.notifyListeners();
+      if (!this._isApplyingRemote) {
+        this.syncToCloud();
+      }
     } catch (e) {
       console.error("Error saving state to localStorage", e);
+    }
+  }
+
+  // --- Firebase Cloud Sync (Real-time across devices) ---
+  async initCloudSync() {
+    if (!window.fbSync || !window.fbSync.db) {
+      this.cloudStatus = "offline";
+      this.notifyListeners();
+      return;
+    }
+
+    try {
+      const { db, doc, getDoc, setDoc, onSnapshot } = window.fbSync;
+      const stateRef = doc(db, "bon_prix_suiv", "main_state");
+
+      const snap = await getDoc(stateRef);
+      if (snap.exists()) {
+        const remoteData = snap.data();
+        if (remoteData && remoteData.users) {
+          this._applyRemoteState(remoteData);
+        }
+      } else {
+        await setDoc(stateRef, JSON.parse(JSON.stringify(this.state)));
+      }
+
+      this.cloudStatus = "synced";
+      this.notifyListeners();
+
+      onSnapshot(stateRef, (docSnap) => {
+        if (docSnap.exists() && !docSnap.metadata.hasPendingWrites) {
+          const remoteData = docSnap.data();
+          if (remoteData && remoteData.users) {
+            this._applyRemoteState(remoteData);
+            this.cloudStatus = "synced";
+            this.notifyListeners();
+          }
+        }
+      }, (err) => {
+        console.warn("Firestore snapshot error:", err);
+        this.cloudStatus = "offline";
+        this.notifyListeners();
+      });
+    } catch (e) {
+      console.warn("Firebase Cloud Sync unavailable, using local storage:", e);
+      this.cloudStatus = "offline";
+      this.notifyListeners();
+    }
+  }
+
+  _applyRemoteState(remoteData) {
+    this._isApplyingRemote = true;
+    try {
+      this.state = remoteData;
+      localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+      if (this.currentUser) {
+        const refreshed = this.getUserById(this.currentUser.id);
+        if (refreshed) {
+          this.currentUser = refreshed;
+          const sessionObj = {
+            ...refreshed,
+            sessionToken: this.computeSecurityToken(refreshed),
+            loginAt: new Date().toISOString()
+          };
+          localStorage.setItem(this.authKey, JSON.stringify(sessionObj));
+        }
+      }
+      this.notifyListeners();
+    } finally {
+      this._isApplyingRemote = false;
+    }
+  }
+
+  async syncToCloud() {
+    if (!window.fbSync || !window.fbSync.db) return false;
+    try {
+      const { db, doc, setDoc } = window.fbSync;
+      const stateRef = doc(db, "bon_prix_suiv", "main_state");
+      await setDoc(stateRef, JSON.parse(JSON.stringify(this.state)));
+      this.cloudStatus = "synced";
+      return true;
+    } catch (e) {
+      console.warn("Failed to sync to Firestore:", e);
+      this.cloudStatus = "offline";
+      return false;
     }
   }
 
@@ -437,6 +526,62 @@ class Store {
     }
     this.state.users = this.state.users.filter(u => u.id !== userId);
     this.saveState();
+  }
+
+  // Change own password & PIN (for Sales Rep, Driver, or Admin)
+  changeOwnPassword(userId, currentPassword, newPassword, newPin = "") {
+    const user = this.getUserById(userId);
+    if (!user) throw new Error("المستخدم غير موجود!");
+
+    if (!currentPassword || user.password !== currentPassword.trim()) {
+      throw new Error("كلمة المرور الحالية غير صحيحة!");
+    }
+
+    if (!newPassword || newPassword.trim().length < 3) {
+      throw new Error("يجب أن تتكون كلمة المرور الجديدة من 3 أحرف أو أرقام على الأقل!");
+    }
+
+    if (newPin && newPin.trim() !== "") {
+      if (!/^\d{4}$/.test(newPin.trim())) {
+        throw new Error("رمز الأمان (PIN) يجب أن يتكون من 4 أرقام بالضبط!");
+      }
+      user.securityPin = newPin.trim();
+    }
+
+    user.password = newPassword.trim();
+    this.addSecurityLog(
+      "تغيير كلمة المرور الشخصية",
+      `${user.name} (${user.phone})`,
+      "success",
+      `قام المستخدم بتحديث كلمة مروره${newPin ? ' ورمز PIN' : ''} بنجاح`
+    );
+    this.saveState();
+    if (this.currentUser && this.currentUser.id === user.id) {
+      this.setCurrentUser(user);
+    }
+    return user;
+  }
+
+  // Admin resets a user's password / PIN
+  adminResetUserPassword(userId, newPassword, newPin = "") {
+    const user = this.getUserById(userId);
+    if (!user) throw new Error("المستخدم غير موجود!");
+    if (!newPassword || newPassword.trim().length < 3) {
+      throw new Error("كلمة المرور الجديدة قصيرة جداً (3 أحرف على الأقل)!");
+    }
+    if (newPin && !/^\d{4}$/.test(newPin.trim())) {
+      throw new Error("رمز PIN يجب أن يكون 4 أرقام!");
+    }
+    user.password = newPassword.trim();
+    if (newPin) user.securityPin = newPin.trim();
+    this.addSecurityLog(
+      "إعادة تعيين كلمة مرور من صاحب المتجر",
+      `${user.name} (${user.phone})`,
+      "info",
+      "تم تحديث كلمة المرور بواسطة المسير العام"
+    );
+    this.saveState();
+    return user;
   }
 
   // --- Products & Inventory Logic (Linked to Orders & Delivery Confirmation) ---
