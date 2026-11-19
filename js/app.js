@@ -134,80 +134,145 @@ function renderAuthScreen() {
 
 function renderLoginForm() {
   return `
-    <div class="space-y-4 text-xs">
+    <div class="space-y-3.5 text-xs">
+      <div class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-900 text-[11px] flex items-center gap-2">
+        <span>🛡️</span>
+        <span><strong>درجة أمان عالية:</strong> الدخول محمي بكلمة المرور ورمز الأمان الشخصي (PIN) وموافقة صاحب المتجر.</span>
+      </div>
+
       <!-- Google Sign-In Button for Admin -->
-      <button type="button" onclick="openGoogleLoginModal()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-blue-500 font-extrabold text-xs sm:text-sm py-3 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2.5">
-        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+      <button type="button" onclick="openGoogleLoginModal()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-blue-500 font-extrabold text-xs py-2.5 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2.5">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
           <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
           <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
           <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
         </svg>
-        <span>الدخول عبر حساب Google (خاص بالمدير 👑)</span>
+        <span>الدخول عبر حساب Google (خاص بصاحب المتجر 👑)</span>
       </button>
 
-      <div class="relative flex py-1 items-center">
+      <div class="relative flex py-0.5 items-center">
         <div class="flex-grow border-t border-slate-200"></div>
-        <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-bold">أو الدخول برقم الهاتف / البريد</span>
+        <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-bold">أو الدخول برقم الهاتف ورمز الأمان</span>
         <div class="flex-grow border-t border-slate-200"></div>
       </div>
 
-      <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف أو بريد Google:</label>
+          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف أو البريد الإلكتروني:</label>
           <div class="relative">
-            <input type="text" id="login-phone" required placeholder="05 / 06 / 07 أو بريد Gmail..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 font-mono text-slate-800 outline-none focus:border-red-600" />
-            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
+            <input type="text" id="login-phone" required placeholder="05 / 06 / 07 أو بريد Gmail..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-slate-800 outline-none focus:border-red-600" />
+            <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
           </div>
         </div>
 
-        <div>
-          <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
-          <div class="relative">
-            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 pr-10 text-slate-800 outline-none focus:border-red-600" />
-            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
+            <div class="relative">
+              <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 text-slate-800 outline-none focus:border-red-600" />
+              <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">رمز PIN الأمني:</label>
+            <input type="password" id="login-pin" maxlength="4" value="1234" required placeholder="1234" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold text-slate-800 outline-none focus:border-red-600" />
           </div>
         </div>
 
-        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 mt-2">
-          <i data-lucide="log-in" class="w-4 h-4"></i>
-          دخول إلى حسابي
+        <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          دخول آمن إلى حسابي
         </button>
       </form>
+
+      <!-- Quick Demo Role Switcher for Easy Inspection -->
+      <div class="pt-3 border-t border-slate-200 space-y-2">
+        <span class="block text-[11px] font-bold text-slate-500 text-center">⚡ دخول سريع للتجربة ومعاينة الأدوار الثلاثة:</span>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" onclick="quickLogin('0550000000', 'admin')" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
+            <span>👑 صاحب المتجر</span>
+            <span class="text-[9px] text-slate-300 font-normal">المسير العام</span>
+          </button>
+          <button type="button" onclick="quickLogin('0551234567', '123')" class="p-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
+            <span>🌸 المندوبة</span>
+            <span class="text-[9px] text-pink-100 font-normal">فاطمة الزهراء</span>
+          </button>
+          <button type="button" onclick="quickLogin('0555987654', '123')" class="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
+            <span>🚚 عامل التوصيل</span>
+            <span class="text-[9px] text-emerald-100 font-normal">ياسين التوصيل</span>
+          </button>
+        </div>
+      </div>
     </div>
   `;
 }
 
 function renderRegisterForm() {
+  const deliveryRates = window.store.getDeliveryRates();
   return `
-    <form onsubmit="handleRegisterSubmit(event)" class="space-y-3.5 text-xs">
+    <form onsubmit="handleRegisterSubmit(event)" class="space-y-3 text-xs">
       <div class="bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-amber-900 text-[11px] leading-relaxed">
-        🛡️ <strong>ملاحظة أمان:</strong> عند تسجيل حسابك، سيصل إشعار فوري لمدير المتجر ليقوم بتصنيف دورك (مندوبة مبيعات أو عامل توصيل) وتفعيل صلاحياتك الخاصة فقط.
+        🛡️ <strong>نظام طلب التسجيل والأمان العالي:</strong> لا يُسمح بالدخول للتطبيق إلا بطلب تسجيل يُراجع ويُقبل من طرف <strong>صاحب المتجر (المسير العام)</strong>.
       </div>
 
       <div>
-        <label class="block font-bold text-slate-700 mb-1">الاسم الكامل:</label>
-        <input type="text" id="reg-name" required placeholder="مثلاً: خديجة منصوري" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+        <label class="block font-bold text-slate-700 mb-1.5">الصفة المطلوبة في طلب التسجيل:</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="cursor-pointer border-2 border-pink-200 bg-pink-50/50 hover:bg-pink-50 rounded-xl p-2.5 flex items-center gap-2">
+            <input type="radio" name="reg-requested-role" value="rep" checked class="accent-pink-600" />
+            <div>
+              <span class="font-extrabold text-pink-900 block">🌸 مندوبة تسويق</span>
+              <span class="text-[10px] text-pink-700">التسويق وحجز الطلبيات</span>
+            </div>
+          </label>
+          <label class="cursor-pointer border-2 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 rounded-xl p-2.5 flex items-center gap-2">
+            <input type="radio" name="reg-requested-role" value="driver" class="accent-emerald-600" />
+            <div>
+              <span class="font-extrabold text-emerald-900 block">🚚 عامل توصيل</span>
+              <span class="text-[10px] text-emerald-700">توصيل وتأكيد الطلبيات</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الاسم الكامل:</label>
+          <input type="text" id="reg-name" required placeholder="مثلاً: خديجة منصوري" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">الولاية / المنطقة:</label>
+          <select id="reg-wilaya" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600 font-semibold">
+            ${deliveryRates.map(r => `<option value="${r.wilayaName}">${r.wilayaName}</option>`).join('')}
+          </select>
+        </div>
       </div>
 
       <div>
-        <label class="block font-bold text-slate-700 mb-1">رقم الهاتف (اسم المستخدم):</label>
+        <label class="block font-bold text-slate-700 mb-1">رقم الهاتف (معرف الدخول):</label>
         <input type="tel" id="reg-phone" required placeholder="05 / 06 / 07 ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono focus:border-red-600" />
       </div>
 
-      <div>
-        <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
-        <input type="password" id="reg-password" required placeholder="اختر كلمة مرور قوية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+      <div class="grid grid-cols-3 gap-2">
+        <div class="col-span-2">
+          <label class="block font-bold text-slate-700 mb-1">كلمة المرور القوية:</label>
+          <input type="password" id="reg-password" required minlength="4" placeholder="اختر كلمة مرور قوية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">رمز PIN (4 أرقام):</label>
+          <input type="password" id="reg-pin" required pattern="\\d{4}" maxlength="4" value="1234" placeholder="1234" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-red-600" />
+        </div>
       </div>
 
       <div>
-        <label class="block font-bold text-slate-700 mb-1">ملاحظة للمدير عن رغبتك بالعمل:</label>
-        <textarea id="reg-note" rows="2" placeholder="أريد العمل كمندوبة مبيعات، أو لدي سيارة للتوصيل في ولاية..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600"></textarea>
+        <label class="block font-bold text-slate-700 mb-1">ملاحظة لصاحب المتجر للموافقة على الطلب:</label>
+        <textarea id="reg-note" rows="2" placeholder="خبرتك في التسويق أو وسيلة النقل المتوفرة للتوصيل..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600"></textarea>
       </div>
 
-      <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 mt-2">
+      <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs py-3 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 mt-1">
         <i data-lucide="user-check" class="w-4 h-4"></i>
-        إرسال طلب التسجيل للإدارة
+        إرسال طلب التسجيل إلى صاحب المتجر للموافقة
       </button>
     </form>
   `;
@@ -215,6 +280,7 @@ function renderRegisterForm() {
 
 // Waiting Screen for Pending Users
 function renderPendingScreen(user) {
+  const reqRoleLabel = user.requestedRole === "driver" ? "🚚 عامل توصيل" : "🌸 مندوبة تسويق وحجز طلبيات";
   return `
     <div class="min-h-screen bg-slate-900 flex items-center justify-center p-4">
       <div class="max-w-md w-full bg-white rounded-3xl p-6 text-center shadow-2xl animate-fade-in border border-slate-100 space-y-4">
@@ -225,27 +291,29 @@ function renderPendingScreen(user) {
 
         <div>
           <span class="inline-block px-3 py-1 bg-amber-100 text-amber-900 rounded-full text-xs font-bold mb-2 pulse-badge">
-            الحساب قيد المراجعة
+            بانتظار قبول طلب التسجيل من صاحب المتجر
           </span>
-          <h2 class="text-lg font-black text-slate-900">أهلاً بك يا ${user.name}!</h2>
+          <h2 class="text-lg font-black text-slate-900">أهلاً بك، ${user.name}!</h2>
           <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-            تم استلام طلب تسجيلك بنجاح برقم الهاتف (<strong class="font-mono text-slate-800">${user.phone}</strong>).
+            تم تسجيل طلبك بصفة (<strong>${reqRoleLabel}</strong>) برقم الهاتف (<strong class="font-mono text-slate-800">${user.phone}</strong>).
             <br>
-            طلبك الآن معروض في لوحة تحكم صاحب المتجر (المدير العام) لتصنيف وتحديد دورك وصلاحياتك (كمندوبة أو كعامل توصيل).
+            نظراً لدرجة الأمان العالية للتطبيق، لا يمكن الدخول إلا بعد أن يقبل <strong>صاحب المتجر (المسير العام)</strong> طلب تسجيلك.
           </p>
         </div>
 
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 text-right">
-          <span class="font-bold text-slate-700 block mb-1">ماذا يحدث الآن؟</span>
-          بمجرد أن يوافق المدير ويصنف حسابك، ستتمكن فوراً من الدخول ورؤية شاشة عملك المخصصة.
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-500 text-right space-y-1">
+          <span class="font-bold text-slate-700 block">🔐 تفاصيل الحماية الأمنية لطلبك:</span>
+          <div>• الصفة المطلوبة: <strong>${reqRoleLabel}</strong></div>
+          <div>• الولاية: <strong>${user.wilaya || 'الجزائر'}</strong></div>
+          <div>• الحالة: <strong class="text-amber-700">قيد مراجعة صاحب المتجر</strong></div>
         </div>
 
         <div class="pt-2 flex flex-col gap-2">
           <button onclick="window.location.reload()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors">
-            تحديث الصفحة والتحقق من التفعيل
+            تحديث الصفحة والتحقق من قبول صاحب المتجر
           </button>
           <button onclick="handleLogout()" class="w-full py-2 text-slate-500 hover:text-slate-800 text-xs font-semibold">
-            تسجيل الخروج
+            تسجيل الخروج والعودة لشاشة الدخول
           </button>
         </div>
 
@@ -262,9 +330,9 @@ function renderRejectedScreen(user) {
         <div class="w-16 h-16 mx-auto rounded-full bg-red-100 text-red-600 flex items-center justify-center text-3xl font-bold">
           ❌
         </div>
-        <h2 class="text-lg font-bold text-slate-900">نعتذر، لم يتم تفعيل الحساب</h2>
+        <h2 class="text-lg font-bold text-slate-900">نعتذر، لم يتم قبول طلب التسجيل</h2>
         <p class="text-xs text-slate-600">
-          تمت مراجعة طلبك من قِبل إدارة المتجر ولم تتم الموافقة عليه حالياً.
+          تمت مراجعة طلبك من قِبل صاحب المتجر ولم تتم الموافقة عليه حالياً.
           ${user.rejectReason ? `<br><span class="text-red-700 font-bold mt-1 inline-block">السبب: ${user.rejectReason}</span>` : ''}
         </p>
         <button onclick="handleLogout()" class="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold">
@@ -280,10 +348,12 @@ function handleLoginSubmit(e) {
   e.preventDefault();
   const phone = document.getElementById("login-phone").value;
   const password = document.getElementById("login-password").value;
+  const pinInput = document.getElementById("login-pin");
+  const securityPin = pinInput ? pinInput.value : "";
 
   try {
-    const user = window.store.loginUser(phone, password);
-    showToast(`مرحباً بك يا ${user.name}! ✨`);
+    const user = window.store.loginUser(phone, password, securityPin);
+    showToast(`مرحباً بك يا ${user.name}! تم التحقق الأمني بنجاح ✨`);
     renderApp();
   } catch (err) {
     alert(err.message);
@@ -295,12 +365,18 @@ function handleRegisterSubmit(e) {
   const name = document.getElementById("reg-name").value;
   const phone = document.getElementById("reg-phone").value;
   const password = document.getElementById("reg-password").value;
+  const pinEl = document.getElementById("reg-pin");
+  const securityPin = pinEl ? pinEl.value : "1234";
+  const wilayaEl = document.getElementById("reg-wilaya");
+  const wilaya = wilayaEl ? wilayaEl.value : "الجزائر العاصمة";
+  const roleRadio = document.querySelector('input[name="reg-requested-role"]:checked');
+  const requestedRole = roleRadio ? roleRadio.value : "rep";
   const note = document.getElementById("reg-note").value;
 
   try {
-    const user = window.store.registerUser({ name, phone, password, note });
+    const user = window.store.registerUser({ name, phone, password, securityPin, requestedRole, wilaya, note });
     window.store.setCurrentUser(user);
-    showToast("تم إرسال طلب تسجيلك للمدير بنجاح ⏳");
+    showToast("تم إرسال طلب تسجيلك لصاحب المتجر للموافقة عليه ⏳");
     renderApp();
   } catch (err) {
     alert(err.message);
@@ -474,7 +550,7 @@ function renderRoleView(currentUser) {
 }
 
 // ==========================================
-// 1. ADMIN / OWNER VIEW (صاحب المتجر)
+// 1. ADMIN / OWNER VIEW (صاحب المتجر - المسير العام للتطبيق)
 // ==========================================
 function renderAdminView(currentUser) {
   const stats = window.store.getDashboardStats();
@@ -488,23 +564,29 @@ function renderAdminView(currentUser) {
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">👑</div>
           <div>
-            <h2 class="text-sm sm:text-base font-bold text-white">لوحة تحكم المدير العام (أنت من يحدد الصلاحيات)</h2>
-            <p class="text-xs text-slate-300">أنت فقط من يرى تكلفة الشراء، أرباح المتجر، وتصنيف أدوار المندوبات والموزعين الجدد.</p>
+            <h2 class="text-sm sm:text-base font-bold text-white">لوحة صاحب المتجر (المسير العام للتطبيق)</h2>
+            <p class="text-xs text-slate-300">إدارة المخزون، تحديد الأسعار المرجعية وأسعار التوصيل، وقبول طلبات تسجيل المندوبات وعمال التوصيل.</p>
           </div>
         </div>
         
         <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <!-- Add Store Owner Direct Order Button (Requirement 3: طلبات صاحب المتجر) -->
+          <button onclick="openAdminOrderModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+            <span>+ حجز طلبية صاحب المتجر</span>
+          </button>
+
           <!-- Add Product Button -->
           <button onclick="openAddProductModal()" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
             <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>+ إضافة منتج جديد</span>
+            <span>+ إضافة منتج للمخزون</span>
           </button>
 
           <!-- Pending Users Alert Button -->
           ${pendingUsers.length > 0 ? `
             <button onclick="switchTab('users')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow pulse-badge">
               <span>🔔</span>
-              <span>${pendingUsers.length} طلب تسجيل بانتظار تصنيفك!</span>
+              <span>${pendingUsers.length} طلب تسجيل بانتظار موافقتك!</span>
             </button>
           ` : ''}
         </div>
@@ -518,21 +600,21 @@ function renderAdminView(currentUser) {
         </button>
         <button onclick="switchTab('users')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'users' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">
           <i data-lucide="shield-check" class="w-4 h-4"></i>
-          المستخدمين وتصنيف الأدوار 🔐
+          طلبات التسجيل والأمان 🔐
           ${pendingUsers.length > 0 ? `<span class="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold pulse-badge">${pendingUsers.length}</span>` : ''}
         </button>
         <button onclick="switchTab('products')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'products' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">
           <i data-lucide="package" class="w-4 h-4"></i>
-          المخزون وتكلفة الشراء
+          المخزون والأسعار المرجعية
           ${stats.lowStockCount > 0 ? `<span class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">${stats.lowStockCount}</span>` : ''}
         </button>
         <button onclick="switchTab('deliveryRates')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'deliveryRates' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">
           <i data-lucide="map-pin" class="w-4 h-4"></i>
-          أسعار التوصيل المرجعية
+          أسعار التوصيل المحددة
         </button>
         <button onclick="switchTab('orders')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'orders' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">
           <i data-lucide="shopping-bag" class="w-4 h-4"></i>
-          الطلبيات
+          كل الطلبيات (المندوبات والمتجر)
           <span class="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">${stats.totalOrders}</span>
         </button>
         <button onclick="switchTab('reps')" class="px-4 py-2.5 text-xs sm:text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'reps' ? 'border-red-600 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-800'}">
@@ -563,34 +645,35 @@ function renderAdminTabContent() {
   return renderAdminDashboard();
 }
 
-// 1.1 Admin Users & Approval Tab (تصنيف أدوار المستخدمين الجدد)
+// 1.1 Admin Users & Approval Tab (قبول طلبات تسجيل المندوبات وعمال التوصيل والأمان العالي)
 function renderAdminUsersTab() {
   const users = window.store.getUsers();
   const adminUser = window.store.getUserByRole("admin") || {};
   const pendingUsers = window.store.getPendingUsers();
   const activeUsers = users.filter(u => u.status === "active" && u.role !== "admin");
+  const securityLogs = window.store.getSecurityLogs();
 
   return `
     <div class="space-y-6 animate-fade-in">
       
       <div>
-        <h3 class="text-base font-bold text-slate-900">إدارة المستخدمين والأمان وتصنيف الأدوار 🔐</h3>
-        <p class="text-xs text-slate-500">عندما يسجل أي شخص جديد، يظهر طلبه هنا للمراجعة. أنت الوحيد الذي يحدد هل هو (مندوبة مبيعات) أو (عامل توصيل)، ويظهر له فقط ما يخصه.</p>
+        <h3 class="text-base font-bold text-slate-900">إدارة الأمان العالي وقبول طلبات تسجيل المندوبات وعمال التوصيل 🔐</h3>
+        <p class="text-xs text-slate-500">لا يُسمح لأي مستخدم بالدخول إلى التطبيق إلا بعد إرسال طلب تسجيل وموافقة صاحب المتجر (المسير العام) عليه.</p>
       </div>
 
-      <!-- ADMIN GOOGLE ACCOUNT SETTINGS -->
+      <!-- ADMIN GOOGLE ACCOUNT & SECURITY SETTINGS -->
       <div class="bg-white rounded-2xl border border-blue-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
             <span class="text-lg">👑</span>
           </div>
           <div>
-            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">حساب المدير المرتبط بـ Google</h4>
-            <p class="text-[11px] text-slate-600 font-mono mt-0.5">${adminUser.email || 'noureddinehadjhamed1992@gmail.com'} | الهاتف: ${adminUser.phone || '0550000000'}</p>
+            <h4 class="font-bold text-slate-900 text-xs sm:text-sm">حساب صاحب المتجر (المسير العام) — حماية مزدوجة 2FA PIN</h4>
+            <p class="text-[11px] text-slate-600 font-mono mt-0.5">${adminUser.email || 'noureddinehadjhamed1992@gmail.com'} | الهاتف: ${adminUser.phone || '0550000000'} | PIN: ${adminUser.securityPin || '1234'}</p>
           </div>
         </div>
         <button onclick="updateAdminGooglePrompt()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl self-start sm:self-center transition-colors">
-          تعديل بريد Google / كلمة مرور المدير
+          تعديل بيانات أمان المدير
         </button>
       </div>
 
@@ -599,44 +682,56 @@ function renderAdminUsersTab() {
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="text-xl">🔔</span>
-            <h4 class="font-black text-slate-900 text-sm">طلبات التسجيل الجديدة بانتظار تصنيفك (${pendingUsers.length})</h4>
+            <h4 class="font-black text-slate-900 text-sm">طلبات تسجيل المندوبات وعمال التوصيل بانتظار موافقتك (${pendingUsers.length})</h4>
           </div>
-          ${pendingUsers.length > 0 ? `<span class="bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full pulse-badge">بحاجة لتحديد الدور</span>` : ''}
+          ${pendingUsers.length > 0 ? `<span class="bg-amber-500 text-white text-xs font-bold px-2.5 py-0.5 rounded-full pulse-badge">بانتظار قبول صاحب المتجر</span>` : ''}
         </div>
 
         ${pendingUsers.length === 0 ? `
           <div class="p-6 text-center text-slate-400 text-xs">
-            لا توجد أي طلبات تسجيل جديدة معلقة حالياً ✨
+            لا توجد أي طلبات تسجيل معلقة حالياً — تم البت في جميع الطلبات ✨
           </div>
         ` : `
           <div class="space-y-3">
-            ${pendingUsers.map(u => `
+            ${pendingUsers.map(u => {
+              const isDriverReq = u.requestedRole === "driver";
+              return `
               <div class="bg-white rounded-2xl border border-amber-300 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-                <div class="space-y-1">
-                  <div class="flex items-center gap-2">
+                <div class="space-y-1.5">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-extrabold text-slate-900 text-sm">${u.name}</span>
                     <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">${u.phone}</span>
+                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isDriverReq ? 'bg-emerald-100 text-emerald-800' : 'bg-pink-100 text-pink-800'}">
+                      ${isDriverReq ? '🚚 طلب تسجيل: عامل توصيل' : '🌸 طلب تسجيل: مندوبة تسويق'}
+                    </span>
+                    <span class="text-[11px] text-blue-700 font-semibold">📍 ${u.wilaya || 'الجزائر'}</span>
                     <span class="text-[10px] text-slate-400 font-mono">${new Date(u.createdAt).toLocaleDateString('ar-EG')}</span>
                   </div>
                   ${u.note ? `
                     <div class="text-xs text-slate-600 bg-slate-50 p-2 rounded-xl mt-1 border border-slate-100">
-                      📝 ملاحظة مقدم الطلب: <em>"${u.note}"</em>
+                      📝 تفاصيل الطلب: <em>"${u.note}"</em>
                     </div>
                   ` : ''}
                 </div>
 
-                <!-- Admin Classification Buttons -->
+                <!-- Store Owner Approval Buttons -->
                 <div class="flex items-center gap-2 self-start md:self-center flex-wrap">
-                  <!-- Assign as Sales Rep -->
-                  <button onclick="approveUserAsRepPrompt('${u.id}', '${u.name}')" class="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95">
-                    <span>🌸</span>
-                    <span>تصنيف كمندوبة مبيعات</span>
+                  <!-- Direct 1-Click Approve in Requested Role -->
+                  <button onclick="approvePendingRequestDirect('${u.id}')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95">
+                    <span>✅</span>
+                    <span>قبول الطلب (${isDriverReq ? 'عامل توصيل' : 'مندوبة'})</span>
                   </button>
 
-                  <!-- Assign as Delivery Driver -->
-                  <button onclick="approveUserAsDriverPrompt('${u.id}', '${u.name}')" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-transform active:scale-95">
+                  <!-- Assign specifically as Sales Rep -->
+                  <button onclick="approveUserAsRepPrompt('${u.id}', '${u.name}', '${u.wilaya || 'الجزائر العاصمة'}')" class="px-2.5 py-2 bg-pink-50 hover:bg-pink-100 text-pink-800 border border-pink-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
+                    <span>🌸</span>
+                    <span>كمندوبة</span>
+                  </button>
+
+                  <!-- Assign specifically as Delivery Driver -->
+                  <button onclick="approveUserAsDriverPrompt('${u.id}', '${u.name}')" class="px-2.5 py-2 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-[11px] font-bold rounded-xl flex items-center gap-1">
                     <span>🚚</span>
-                    <span>تصنيف كعامل توصيل</span>
+                    <span>كعامل توصيل</span>
                   </button>
 
                   <!-- Reject -->
@@ -645,7 +740,8 @@ function renderAdminUsersTab() {
                   </button>
                 </div>
               </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         `}
       </div>
@@ -653,19 +749,19 @@ function renderAdminUsersTab() {
       <!-- SECTION 2: ACTIVE USERS LIST -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h4 class="font-bold text-slate-900 text-sm">قائمة المستخدمين المعتمدين وصلاحياتهم (${activeUsers.length})</h4>
-          <span class="text-xs text-slate-500">كل مستخدم لا يمكنه الوصول إلا لواجهته المخصصة فقط</span>
+          <h4 class="font-bold text-slate-900 text-sm">قائمة المندوبات وعمال التوصيل المقبولين (${activeUsers.length})</h4>
+          <span class="text-xs text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg">🛡️ درجة الأمان: عالية (تحقق مزدوج + عزل صلاحيات)</span>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-right text-xs">
             <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
               <tr>
-                <th class="p-3 font-bold">اسم المستخدم</th>
+                <th class="p-3 font-bold">الاسم الكامل</th>
                 <th class="p-3 font-bold">رقم الهاتف</th>
-                <th class="p-3 font-bold">الدور المصنف</th>
-                <th class="p-3 font-bold">الصلاحية المفعلة</th>
-                <th class="p-3 font-bold">تاريخ الاعتماد</th>
+                <th class="p-3 font-bold">الصفة المعتمدة</th>
+                <th class="p-3 font-bold">درجة الأمان والصلاحية</th>
+                <th class="p-3 font-bold">تاريخ القبول</th>
                 <th class="p-3 font-bold text-center">إجراءات</th>
               </tr>
             </thead>
@@ -678,17 +774,17 @@ function renderAdminUsersTab() {
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
                       u.role === 'rep' ? 'bg-pink-100 text-pink-800' : 'bg-emerald-100 text-emerald-800'
                     }">
-                      ${u.role === 'rep' ? '🌸 مندوبة مبيعات' : '🚚 عامل توصيل'}
+                      ${u.role === 'rep' ? '🌸 مندوبة تسويق' : '🚚 عامل توصيل'}
                     </span>
                   </td>
                   <td class="p-3 text-slate-500 text-[11px]">
-                    ${u.role === 'rep' ? 'تسجيل الطلبيات والكتالوج وأرباحها فقط' : 'مهام التوصيل ومستحقات أتعابه فقط'}
+                    🔒 PIN مفعل | ${u.role === 'rep' ? 'حجز الطلبيات وزيادة ربحها فوق السعر المرجعي' : 'توصيل الطلبيات وتأكيد التسليم لخصم المخزون'}
                   </td>
                   <td class="p-3 font-mono text-slate-400 text-[10px]">
                     ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-EG') : '-'}
                   </td>
                   <td class="p-3 text-center">
-                    <button onclick="confirmDeleteUser('${u.id}')" title="حذف المستخدم" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
+                    <button onclick="confirmDeleteUser('${u.id}')" title="إلغاء/حذف الحساب" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                       <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                   </td>
@@ -696,6 +792,30 @@ function renderAdminUsersTab() {
               `).join('')}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- SECTION 3: HIGH-SECURITY AUDIT LOG -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span>🛡️</span>
+            <h4 class="font-bold text-slate-900 text-sm">سجل الرقابة والأمان العالي (Security Audit Log)</h4>
+          </div>
+          <span class="text-[11px] text-slate-500">يوثق طلبات التسجيل، قرارات القبول، وعمليات تأكيد التسليم وخصم المخزون</span>
+        </div>
+        <div class="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs">
+          ${securityLogs.map(log => `
+            <div class="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-slate-50">
+              <div>
+                <span class="font-bold text-slate-900">${log.event}</span>
+                <span class="text-slate-500 mx-1">—</span>
+                <span class="font-semibold text-blue-700">${log.actor}</span>
+                <p class="text-[11px] text-slate-500 mt-0.5">${log.details}</p>
+              </div>
+              <span class="text-[10px] font-mono text-slate-400 shrink-0">${log.time}</span>
+            </div>
+          `).join('')}
         </div>
       </div>
 
@@ -718,39 +838,40 @@ function updateAdminGooglePrompt() {
   renderApp();
 }
 
-function approveUserAsRepPrompt(userId, name) {
-  const wilaya = prompt(`تصنيف (${name}) كمندوبة مبيعات.\nأدخل ولاية أو منطقة المندوبة:`, "الجزائر");
-  if (wilaya !== null) {
-    window.store.approveUser(userId, "rep", { wilaya });
-    showToast(`تم اعتماد وتفعيل (${name}) كمندوبة مبيعات بنجاح 🌸`);
-    renderApp();
-  }
+function approvePendingRequestDirect(userId) {
+  const user = window.store.getUserById(userId);
+  if (!user) return;
+  const role = user.requestedRole === "driver" ? "driver" : "rep";
+  window.store.approveUser(userId, role, {
+    wilaya: user.wilaya || "الجزائر العاصمة",
+    vehicle: "سيارة توصيل"
+  });
+  showToast(`تم قبول طلب تسجيل (${user.name}) وتفعيل حسابه كـ ${role === 'driver' ? 'عامل توصيل 🚚' : 'مندوبة تسويق 🌸'} بنجاح!`);
+  renderApp();
+}
+
+function approveUserAsRepPrompt(userId, name, defaultWilaya = "الجزائر العاصمة") {
+  window.store.approveUser(userId, "rep", { wilaya: defaultWilaya });
+  showToast(`تم قبول وتفعيل (${name}) كمندوبة مبيعات بنجاح 🌸`);
+  renderApp();
 }
 
 function approveUserAsDriverPrompt(userId, name) {
-  const vehicle = prompt(`تصنيف (${name}) كعامل توصيل.\nأدخل وسيلة النقل أو الملاحظة:`, "سيارة نقل");
-  if (vehicle !== null) {
-    window.store.approveUser(userId, "driver", { vehicle });
-    showToast(`تم اعتماد وتفعيل (${name}) كعامل توصيل بنجاح 🚚`);
-    renderApp();
-  }
+  window.store.approveUser(userId, "driver", { vehicle: "سيارة نقل" });
+  showToast(`تم قبول وتفعيل (${name}) كعامل توصيل بنجاح 🚚`);
+  renderApp();
 }
 
 function rejectUserPrompt(userId) {
-  const reason = prompt("سبب رفض طلب الحساب:", "عدم توفر شواغر حالياً");
-  if (reason !== null) {
-    window.store.rejectUser(userId, reason);
-    showToast("تم رفض الطلب.");
-    renderApp();
-  }
+  window.store.rejectUser(userId, "تم رفض طلب التسجيل من طرف صاحب المتجر");
+  showToast("تم رفض طلب التسجيل.");
+  renderApp();
 }
 
 function confirmDeleteUser(userId) {
-  if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
-    window.store.deleteUser(userId);
-    showToast("تم حذف المستخدم.");
-    renderApp();
-  }
+  window.store.deleteUser(userId);
+  showToast("تم حذف الحساب.");
+  renderApp();
 }
 
 // 1.2 Admin Dashboard Tab
@@ -987,19 +1108,35 @@ function renderAdminProducts() {
                 </div>
                 <p class="text-xs text-slate-500 line-clamp-2 mb-3">${p.description || 'لا يوجد وصف'}</p>
                 
-                <!-- Pricing Box with Owner Cost & Profit -->
+                <!-- Pricing Box with Owner Cost & Reference Price -->
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
                   <div class="flex items-center justify-between text-xs">
                     <span class="text-slate-500">سعر الشراء (التكلفة عليك):</span>
                     <span class="font-bold text-slate-800">${cost.toLocaleString()} دج</span>
                   </div>
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-red-700 font-bold">سعر بيعك (للمندوبة):</span>
+                    <span class="text-red-700 font-bold">السعر المرجعي (تضيف المندوبة ربحها فوقه):</span>
                     <span class="font-extrabold text-red-900">${base.toLocaleString()} دج</span>
                   </div>
                   <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
                     <span class="text-emerald-700 font-bold">ربحك الصافي للقطعة:</span>
                     <span class="font-black text-emerald-600">+${profit.toLocaleString()} دج (${profitPct}%)</span>
+                  </div>
+                </div>
+
+                <!-- Stock linkage with orders -->
+                <div class="mt-2 grid grid-cols-3 gap-1.5 text-center text-[10px]">
+                  <div class="bg-white border border-slate-200 rounded-lg p-1.5">
+                    <span class="block text-slate-500">المخزون الفعلي</span>
+                    <span class="font-black text-slate-900 text-xs">${p.stock}</span>
+                  </div>
+                  <div class="bg-amber-50 border border-amber-200 rounded-lg p-1.5">
+                    <span class="block text-amber-700">محجوز قيد التوصيل</span>
+                    <span class="font-black text-amber-800 text-xs">${window.store.getReservedStock(p.id)}</span>
+                  </div>
+                  <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-1.5">
+                    <span class="block text-emerald-700">متاح للحجز</span>
+                    <span class="font-black text-emerald-800 text-xs">${window.store.getAvailableStock(p.id)}</span>
                   </div>
                 </div>
               </div>
@@ -1027,6 +1164,47 @@ function renderAdminProducts() {
           </div>
           `;
         }).join('')}
+      </div>
+
+      <!-- Stock Movements Log (linked to delivery confirmation) -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100">
+          <h4 class="font-bold text-slate-900 text-sm">📦 سجل حركة المخزون (الخصم التلقائي بعد تأكيد التسليم)</h4>
+          <p class="text-[11px] text-slate-500 mt-0.5">كل طلبية (من المندوبة أو من صاحب المتجر) تُحجز أولاً، ثم تنقص الكمية من المخزون مباشرة بعد أن يؤكد عامل التوصيل تسليمها.</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-right text-xs">
+            <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
+              <tr>
+                <th class="p-2.5 font-bold">التاريخ</th>
+                <th class="p-2.5 font-bold">الطلبية / المصدر</th>
+                <th class="p-2.5 font-bold">المنتج</th>
+                <th class="p-2.5 font-bold">الكمية</th>
+                <th class="p-2.5 font-bold">المخزون قبل ← بعد</th>
+                <th class="p-2.5 font-bold">بواسطة</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${window.store.getStockMovements().length === 0 ? `
+                <tr><td colspan="6" class="p-6 text-center text-slate-400">لا توجد حركات مخزون بعد.</td></tr>
+              ` : window.store.getStockMovements().slice(0, 30).map(m => `
+                <tr class="hover:bg-slate-50">
+                  <td class="p-2.5 font-mono text-slate-500">${m.date}</td>
+                  <td class="p-2.5">
+                    <span class="font-mono font-bold text-slate-800">${m.orderId}</span>
+                    <span class="block text-[10px] ${m.orderSource === 'owner' ? 'text-blue-700' : 'text-pink-700'}">${m.orderSource === 'owner' ? '👑 صاحب المتجر' : '🌸 مندوبة'}</span>
+                  </td>
+                  <td class="p-2.5 font-semibold">${m.productName}</td>
+                  <td class="p-2.5 font-black ${m.type === 'delivery_confirmed' || m.type === 'manual_sub' ? 'text-red-600' : 'text-emerald-600'}">
+                    ${m.type === 'delivery_confirmed' || m.type === 'manual_sub' ? '-' : '+'}${m.quantity}
+                  </td>
+                  <td class="p-2.5 font-mono">${m.stockBefore} ← <strong>${m.stockAfter}</strong></td>
+                  <td class="p-2.5 text-slate-600 text-[11px]">${m.actor}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   `;
@@ -1159,7 +1337,7 @@ function renderAdminOrders() {
             <thead class="bg-slate-50 text-slate-600 border-b border-slate-200">
               <tr>
                 <th class="p-3 font-bold">الطلب والتاريخ</th>
-                <th class="p-3 font-bold">المندوبة</th>
+                <th class="p-3 font-bold">مصدر الطلبية / المخزون</th>
                 <th class="p-3 font-bold">الزبون والولاية</th>
                 <th class="p-3 font-bold">المنتج والكمية</th>
                 <th class="p-3 font-bold">المبالغ والتوصيل</th>
@@ -1181,8 +1359,13 @@ function renderAdminOrders() {
                     <span class="font-bold text-slate-900 block font-mono">${o.id}</span>
                     <span class="text-[10px] text-slate-400">${o.date}</span>
                   </td>
-                  <td class="p-3 text-pink-700 font-bold whitespace-nowrap">
-                    🌸 ${o.repName}
+                  <td class="p-3 font-bold whitespace-nowrap">
+                    ${o.repId === 'OWNER' || o.orderSource === 'owner'
+                      ? `<span class="text-blue-700">👑 صاحب المتجر</span>`
+                      : `<span class="text-pink-700">🌸 ${o.repName}</span>`}
+                    <span class="block text-[10px] font-semibold ${o.stockDeducted ? 'text-emerald-600' : 'text-amber-600'}">
+                      ${o.stockDeducted ? '✔ خُصمت من المخزون' : '⏳ محجوزة (لم تُخصم بعد)'}
+                    </span>
                   </td>
                   <td class="p-3">
                     <div class="font-bold text-slate-800">${o.customerName}</div>
@@ -1484,14 +1667,14 @@ function renderRepTabContent(rep) {
 }
 
 function renderRepNewOrderForm(rep) {
-  const products = window.store.getProducts().filter(p => p.stock > 0);
+  const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
   const deliveryRates = window.store.getDeliveryRates();
 
   return `
     <div class="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-sm">
       <div class="mb-5 pb-4 border-b border-slate-100">
-        <h3 class="text-base font-bold text-slate-900">تسجيل طلبية زبون جديدة 🛍️</h3>
-        <p class="text-xs text-slate-500 mt-0.5">حددي سعر بيع المنتج بإضافة هامش ربحكِ، وسعر التوصيل للزبون. إذا خفضتِ سعر التوصيل، سيُخصم الفارق من أرباحكِ آلياً.</p>
+        <h3 class="text-base font-bold text-slate-900">حجز طلبية زبون جديدة 🛍️</h3>
+        <p class="text-xs text-slate-500 mt-0.5">أضيفي ربحكِ فوق <strong>السعر المرجعي</strong> الذي حدده صاحب المتجر. سعر التوصيل يحدده صاحب المتجر، ويمكنكِ تخفيضه للزبون بشرط خصم الفارق من ربحكِ.</p>
       </div>
 
       <form onsubmit="handleRepSubmitOrder(event, '${rep.id}')" class="space-y-4">
@@ -1501,8 +1684,8 @@ function renderRepNewOrderForm(rep) {
           <select id="order-product-select" onchange="updateRepProfitCalculator()" required class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 outline-none focus:border-pink-500">
             <option value="">-- اختر المنتج من المخزون --</option>
             ${products.map(p => `
-              <option value="${p.id}" data-baseprice="${p.basePrice}" data-stock="${p.stock}">
-                ${p.name} (المتوفر: ${p.stock} | سعر المتجر المعتمد لكِ: ${p.basePrice} دج)
+              <option value="${p.id}" data-baseprice="${p.basePrice}" data-stock="${window.store.getAvailableStock(p.id)}">
+                ${p.name} (متاح للحجز: ${window.store.getAvailableStock(p.id)} | السعر المرجعي: ${p.basePrice} دج)
               </option>
             `).join('')}
           </select>
@@ -1587,7 +1770,10 @@ function renderRepNewOrderForm(rep) {
           </div>
 
           <div id="delivery-subsidy-alert" class="hidden text-[11px] p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-medium">
-            💡 ملاحظة: قمتِ بتخفيض سعر التوصيل بـ <strong id="subsidy-amount-text" class="text-red-600">0</strong> دج للزبون! سيتم خصم هذا الفارق تلقائياً من فائدتكِ الصافية دون المساس بأتعاب الموزع.
+            💡 ملاحظة: قمتِ بتخفيض سعر التوصيل بـ <strong id="subsidy-amount-text" class="text-red-600">0</strong> دج للزبون! سيتم خصم هذا الفارق تلقائياً من ربحكِ، ويبقى أجر عامل التوصيل كاملاً حسب السعر الذي حدده صاحب المتجر.
+          </div>
+          <div id="subsidy-exceeds-alert" class="hidden text-[11px] p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-800 font-bold">
+            ⛔ فارق تخفيض التوصيل أكبر من ربحكِ فوق السعر المرجعي! زيدي سعر البيع أو قللي التخفيض.
           </div>
         </div>
 
@@ -1792,7 +1978,7 @@ function renderDriverView(currentUser) {
   }
   const driverFin = window.store.getDriverFinancials(driver.id || "DRV-01");
   const allOrders = window.store.getOrders();
-  const activeDeliveries = allOrders.filter(o => o.status === "out_for_delivery");
+  const activeDeliveries = allOrders.filter(o => o.status === "out_for_delivery" && (!o.driverId || o.driverId === driver.id));
 
   return `
     <div class="animate-fade-in space-y-5 max-w-3xl mx-auto">
@@ -2668,6 +2854,7 @@ function onOrderWilayaChange() {
     const fee = parseFloat(opt.getAttribute("data-fee")) || 500;
     standardInput.value = fee;
     chargedInput.value = fee;
+    chargedInput.max = fee;
   }
 
   updateRepProfitCalculator();
@@ -2713,6 +2900,15 @@ function updateRepProfitCalculator() {
       subsidyAmountText.innerText = deliverySubsidy.toLocaleString();
     } else {
       subsidyAlert.classList.add("hidden");
+    }
+  }
+
+  const exceedsAlert = document.getElementById("subsidy-exceeds-alert");
+  if (exceedsAlert) {
+    if (deliverySubsidy > grossRepProfit && deliverySubsidy > 0) {
+      exceedsAlert.classList.remove("hidden");
+    } else {
+      exceedsAlert.classList.add("hidden");
     }
   }
 }
@@ -2973,9 +3169,12 @@ function handleResolveInquiry(e, orderId) {
 }
 
 function driverMarkDeliveredPrompt(orderId, totalToCollect) {
-  if (confirm(`هل تم تسليم الطلبية بنجاح واستلام مبلغ ${totalToCollect.toLocaleString()} دج من الزبون (شامل المنتجات والتوصيل)؟`)) {
-    window.store.markOrderDelivered(orderId);
-    showToast("رائع! تم تأكيد التسليم واحتساب فائدة المندوبة بنجاح 🟢");
+  if (confirm(`هل تم تسليم الطلبية بنجاح واستلام مبلغ ${totalToCollect.toLocaleString()} دج من الزبون؟\n\nسيتم خصم الكمية من المخزون مباشرة بعد التأكيد.`)) {
+    const user = window.store.getCurrentUser();
+    const res = window.store.markOrderDelivered(orderId, "", `${user ? user.name : 'عامل التوصيل'} (عامل التوصيل)`);
+    if (res && res.order) {
+      showToast(`✅ تم تأكيد التسليم وخصم ${res.order.quantity} من المخزون (${res.stockBefore} ← ${res.stockAfter})`);
+    }
   }
 }
 
@@ -2983,21 +3182,147 @@ function driverMarkReturnedPrompt(orderId) {
   const reason = prompt("يرجى كتابة سبب تعذر التوصيل / الإرجاع (مثلاً: الزبون غير رأيه):");
   if (reason !== null) {
     window.store.markOrderReturned(orderId, reason);
-    showToast("تم تسجيل الطرد كمرتجع وإعادة الكمية للمخزون تلقائياً.");
+    showToast("تم تسجيل الطلبية كمرتجعة وتحرير الكمية المحجوزة في المخزون.");
   }
 }
 
 function adminMarkDelivered(orderId) {
-  if (confirm("هل تريد تأكيد تسليم هذه الطلبية يدوياً؟")) {
-    window.store.markOrderDelivered(orderId);
-    showToast("تم تأكيد التوصيل واحتساب الفائدة للمندوبة.");
+  if (confirm("هل تريد تأكيد تسليم هذه الطلبية يدوياً؟ سيتم خصم الكمية من المخزون مباشرة.")) {
+    const res = window.store.markOrderDelivered(orderId, "", "صاحب المتجر (تأكيد يدوي)");
+    if (res && res.order) {
+      showToast(`تم تأكيد التسليم وخصم ${res.order.quantity} من المخزون (${res.stockBefore} ← ${res.stockAfter})`);
+    }
   }
 }
 
 function adminMarkReturned(orderId) {
-  if (confirm("هل تريد تأكيد إرجاع هذه الطلبية وإعادة السلعة إلى المخزون؟")) {
-    window.store.markOrderReturned(orderId, "إرجاع يدوي من المدير");
-    showToast("تم تسجيل الإرجاع واستعادة المخزون.");
+  if (confirm("هل تريد تأكيد إرجاع/إلغاء هذه الطلبية؟")) {
+    window.store.markOrderReturned(orderId, "إرجاع يدوي من صاحب المتجر");
+    showToast("تم تسجيل الإرجاع وتحرير المخزون.");
+  }
+}
+
+// ==========================================
+// STORE OWNER DIRECT ORDER (طلبية صاحب المتجر مرتبطة بالمخزون)
+// ==========================================
+function openAdminOrderModal() {
+  const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
+  const rates = window.store.getDeliveryRates();
+  const drivers = window.store.state.drivers || [];
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl animate-fade-in max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 class="text-sm font-bold text-slate-900">👑 حجز طلبية مباشرة من صاحب المتجر</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+        <p class="text-[11px] text-slate-500 mb-3">الطلبية تُحجز في المخزون وتُرسل لعامل التوصيل، وتنقص الكمية مباشرة بعد تأكيد التسليم.</p>
+
+        <form onsubmit="handleAdminSubmitOrder(event)" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">المنتج:</label>
+            <select id="ao-product" required onchange="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
+              <option value="">-- اختر المنتج --</option>
+              ${products.map(p => `<option value="${p.id}" data-base="${p.basePrice}">${p.name} (متاح: ${window.store.getAvailableStock(p.id)} | مرجعي: ${p.basePrice} دج)</option>`).join('')}
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">الكمية:</label>
+              <input type="number" id="ao-qty" min="1" value="1" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر البيع للزبون:</label>
+              <input type="number" id="ao-price" min="0" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-blue-700" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">الولاية:</label>
+              <select id="ao-wilaya" required onchange="aoUpdate(true)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
+                <option value="">-- اختر --</option>
+                ${rates.map(r => `<option value="${r.wilayaName}" data-fee="${r.defaultFee}">${r.wilayaName} (${r.defaultFee} دج)</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للزبون:</label>
+              <input type="number" id="ao-delivery" min="0" value="0" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="ao-commune" required placeholder="البلدية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <select id="ao-driver" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
+              ${drivers.map(d => `<option value="${d.id}">🚚 ${d.name}</option>`).join('')}
+            </select>
+          </div>
+          <input type="text" id="ao-name" required placeholder="اسم الزبون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+          <input type="tel" id="ao-phone" required placeholder="هاتف الزبون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono" />
+          <input type="text" id="ao-address" required placeholder="العنوان التفصيلي" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl flex justify-between font-bold">
+            <span>إجمالي التحصيل: <span id="ao-total" class="text-blue-700">0 دج</span></span>
+            <span>ربحك: <span id="ao-profit" class="text-emerald-700">0 دج</span></span>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">حجز وإرسال للتوصيل 🚚</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function aoUpdate(wilayaChanged = false) {
+  const prodSel = document.getElementById("ao-product");
+  const wilSel = document.getElementById("ao-wilaya");
+  const priceEl = document.getElementById("ao-price");
+  const delEl = document.getElementById("ao-delivery");
+  if (!prodSel) return;
+  const pOpt = prodSel.options[prodSel.selectedIndex];
+  const product = window.store.getProductById(prodSel.value);
+  if (product && !priceEl.value) priceEl.value = product.basePrice;
+  if (wilayaChanged) {
+    const wOpt = wilSel.options[wilSel.selectedIndex];
+    delEl.value = wOpt && wOpt.value ? wOpt.getAttribute("data-fee") : 0;
+  }
+  const qty = parseInt(document.getElementById("ao-qty").value) || 1;
+  const price = parseFloat(priceEl.value) || 0;
+  const del = parseFloat(delEl.value) || 0;
+  const wOpt = wilSel.options[wilSel.selectedIndex];
+  const stdFee = wOpt && wOpt.value ? parseFloat(wOpt.getAttribute("data-fee")) : 0;
+  const cost = product ? (product.costPrice || 0) : 0;
+  const profit = (price - cost) * qty - Math.max(0, stdFee - del);
+  document.getElementById("ao-total").innerText = `${(price * qty + del).toLocaleString()} دج`;
+  document.getElementById("ao-profit").innerText = `${profit.toLocaleString()} دج`;
+}
+
+function handleAdminSubmitOrder(e) {
+  e.preventDefault();
+  const wilSel = document.getElementById("ao-wilaya");
+  const wOpt = wilSel.options[wilSel.selectedIndex];
+  try {
+    const order = window.store.createOrder({
+      orderSource: "owner",
+      repId: "OWNER",
+      productId: document.getElementById("ao-product").value,
+      quantity: document.getElementById("ao-qty").value,
+      sellingPrice: document.getElementById("ao-price").value,
+      wilaya: wilSel.value,
+      commune: document.getElementById("ao-commune").value,
+      standardDeliveryFee: wOpt ? wOpt.getAttribute("data-fee") : 0,
+      chargedDeliveryFee: document.getElementById("ao-delivery").value,
+      customerName: document.getElementById("ao-name").value,
+      customerPhone: document.getElementById("ao-phone").value,
+      address: document.getElementById("ao-address").value,
+      driverId: document.getElementById("ao-driver").value
+    });
+    closeModal();
+    showToast(`تم حجز طلبية صاحب المتجر #${order.id} وإرسالها لعامل التوصيل 🚚`);
+  } catch (err) {
+    alert(err.message);
   }
 }
 

@@ -1,6 +1,6 @@
-// Initial Mock / Seed Data with User Accounts, Cost Prices, and Algerian Delivery Rates
+// Initial Mock / Seed Data with High-Security User Accounts, Reference Prices, Algerian Delivery Rates & Stock Movement Log
 const DEFAULT_DATA = {
-  // حسابات المستخدمين وإدارة الأمان والصلاحيات
+  // حسابات المستخدمين وإدارة الأمان العالي وطلبات التسجيل
   users: [
     {
       id: "USR-001",
@@ -8,10 +8,13 @@ const DEFAULT_DATA = {
       email: "noureddinehadjhamed1992@gmail.com",
       phone: "0550000000",
       password: "admin",
+      securityPin: "1234",
       authProvider: "google",
       role: "admin", // admin, rep, driver, pending
-      status: "active", // active, pending, rejected
+      requestedRole: "admin",
+      status: "active", // active, pending, rejected, suspended
       linkedId: null,
+      securityLevel: "high",
       createdAt: "2026-11-01T08:00:00Z"
     },
     {
@@ -19,9 +22,13 @@ const DEFAULT_DATA = {
       name: "فاطمة الزهراء",
       phone: "0551234567",
       password: "123",
+      securityPin: "1234",
       role: "rep",
+      requestedRole: "rep",
+      wilaya: "الجزائر العاصمة",
       status: "active",
       linkedId: "REP-01",
+      securityLevel: "high",
       createdAt: "2026-11-05T10:00:00Z"
     },
     {
@@ -29,9 +36,13 @@ const DEFAULT_DATA = {
       name: "مريم بن علي",
       phone: "0662345678",
       password: "123",
+      securityPin: "1234",
       role: "rep",
+      requestedRole: "rep",
+      wilaya: "وهران",
       status: "active",
       linkedId: "REP-02",
+      securityLevel: "high",
       createdAt: "2026-11-06T11:30:00Z"
     },
     {
@@ -39,9 +50,13 @@ const DEFAULT_DATA = {
       name: "سارة بلقاسم",
       phone: "0773456789",
       password: "123",
+      securityPin: "1234",
       role: "rep",
+      requestedRole: "rep",
+      wilaya: "قسنطينة",
       status: "active",
       linkedId: "REP-03",
+      securityLevel: "high",
       createdAt: "2026-11-08T14:15:00Z"
     },
     {
@@ -49,21 +64,44 @@ const DEFAULT_DATA = {
       name: "ياسين التوصيل السريع",
       phone: "0555987654",
       password: "123",
+      securityPin: "1234",
       role: "driver",
+      requestedRole: "driver",
+      wilaya: "الجزائر العاصمة",
       status: "active",
       linkedId: "DRV-01",
+      securityLevel: "high",
       createdAt: "2026-11-02T09:00:00Z"
     },
-    // مستخدم جديد سجل حسابه وينتظر موافقة وتصنيف المدير!
+    // طلب تسجيل رقم 1: مندوبة جديدة تنتظر موافقة صاحب المتجر
     {
       id: "USR-006",
       name: "خديجة منصوري",
       phone: "0779998877",
       password: "123",
+      securityPin: "1234",
       role: "pending",
+      requestedRole: "rep",
+      wilaya: "قسنطينة",
       status: "pending",
-      note: "أريد العمل كمندوبة مبيعات، أسوق عبر تيك توك ومجموعات واتساب في قسنطينة.",
+      note: "أريد العمل كمندوبة تسويق وحجز طلبيات، أسوق عبر تيك توك ومجموعات واتساب في قسنطينة.",
+      securityLevel: "high",
       createdAt: "2026-11-17T16:45:00Z"
+    },
+    // طلب تسجيل رقم 2: عامل توصيل جديد ينتظر موافقة صاحب المتجر
+    {
+      id: "USR-007",
+      name: "كريم بوعلام للتوصيل",
+      phone: "0668112233",
+      password: "123",
+      securityPin: "1234",
+      role: "pending",
+      requestedRole: "driver",
+      wilaya: "وهران",
+      status: "pending",
+      note: "طلب تسجيل كعامل توصيل، أملك سيارة نفعية للتوصيل السريع في وهران والمناطق المجاورة.",
+      securityLevel: "high",
+      createdAt: "2026-11-18T11:20:00Z"
     }
   ],
 
@@ -73,8 +111,8 @@ const DEFAULT_DATA = {
       name: "عطر فاخر رويال 100 مل",
       category: "عطور",
       costPrice: 1400, // سعر الشراء / التكلفة على صاحب المتجر
-      basePrice: 2200, // سعر البيع الخاص بصاحب المتجر (سعر الجملة للمندوبة)
-      stock: 28,
+      basePrice: 2200, // السعر المرجعي الذي يحدده صاحب المتجر (وتضيف المندوبة ربحها فوقه)
+      stock: 28,       // الكمية الفعلية في المخزون (تنقص مباشرة بعد تأكيد تسليم الطلبية من عامل التوصيل)
       minStockAlert: 5,
       image: "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=300&q=80",
       description: "عطر شرقي فرنسي بتركيز عالي وثباتية تدوم طويلاً."
@@ -107,7 +145,7 @@ const DEFAULT_DATA = {
       category: "حقائب",
       costPrice: 1750,
       basePrice: 2800,
-      stock: 3,
+      stock: 4,
       minStockAlert: 5,
       image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=300&q=80",
       description: "حقيبة أنيقة من الجلد الفاخر مناسبة لجميع المناسبات."
@@ -125,7 +163,7 @@ const DEFAULT_DATA = {
     }
   ],
 
-  // أسعار التوصيل حسب الولايات والبلديات الجزائرية
+  // أسعار التوصيل المحددة من طرف صاحب المتجر حسب الولايات والبلديات
   deliveryRates: [
     { id: "DEL-16", wilayaCode: "16", wilayaName: "الجزائر العاصمة", defaultFee: 400, communes: "كافة البلديات، سيدي امحمد، باب الواد، زرالدة، الدار البيضاء، القبة، بئر مراد رايس" },
     { id: "DEL-09", wilayaCode: "09", wilayaName: "البليدة", defaultFee: 500, communes: "البليدة مركز، بوفاريك، أولاد يعيش، بوعرفة، موزاية" },
@@ -181,14 +219,15 @@ const DEFAULT_DATA = {
       name: "ياسين التوصيل السريع",
       phone: "0555987654",
       vehicle: "سيارة نقل خفيفة",
-      activeOrdersCount: 2
+      activeOrdersCount: 3
     }
   ],
 
   orders: [
     {
-      id: "ORD-2024-001",
+      id: "ORD-2026-001",
       date: "2026-11-16 10:30",
+      orderSource: "rep", // 'rep' (طلبية مندوبة) أو 'owner' (طلبية صاحب المتجر)
       repId: "REP-01",
       repName: "فاطمة الزهراء",
       customerName: "أمينة قدور",
@@ -206,17 +245,21 @@ const DEFAULT_DATA = {
       chargedDeliveryFee: 600,
       deliverySubsidy: 0,
       totalCustomerAmount: 3600,
+      grossRepProfit: 800,
       repProfit: 800,
       ownerProfit: 800,
       status: "delivered",
+      stockDeducted: true, // تم خصم الكمية من المخزون بعد تأكيد التسليم من عامل التوصيل
+      stockDeductedAt: "2026-11-17T09:15:00Z",
       driverId: "DRV-01",
-      driverNotes: "تم التسليم بنجاح مع استلام 3600 دج نقداً.",
+      driverNotes: "تم التسليم بنجاح مع استلام 3600 دج نقداً وخصم القطعة من المخزون.",
       createdAt: "2026-11-16T10:30:00Z",
       deliveredAt: "2026-11-17T09:15:00Z"
     },
     {
-      id: "ORD-2024-002",
+      id: "ORD-2026-002",
       date: "2026-11-16 15:45",
+      orderSource: "rep",
       repId: "REP-01",
       repName: "فاطمة الزهراء",
       customerName: "خالد مرابط",
@@ -234,17 +277,20 @@ const DEFAULT_DATA = {
       chargedDeliveryFee: 200,
       deliverySubsidy: 200,
       totalCustomerAmount: 4400,
+      grossRepProfit: 1000,
       repProfit: 800,
       ownerProfit: 1200,
       status: "out_for_delivery",
+      stockDeducted: false, // لم تُخصم من المخزون الفعلي بعد لأنها قيد التوصيل ولم يؤكد عامل التوصيل تسليمها بعد
       driverId: "DRV-01",
       driverNotes: "⚠️ اتصلت به مرتين ولم يرد، سأحاول مجدداً بعد العصر.",
       driverInquiryOpen: true,
       createdAt: "2026-11-16T15:45:00Z"
     },
     {
-      id: "ORD-2024-003",
+      id: "ORD-2026-003",
       date: "2026-11-17 08:20",
+      orderSource: "rep",
       repId: "REP-02",
       repName: "مريم بن علي",
       customerName: "سهام بوجنان",
@@ -262,13 +308,84 @@ const DEFAULT_DATA = {
       chargedDeliveryFee: 250,
       deliverySubsidy: 0,
       totalCustomerAmount: 5450,
+      grossRepProfit: 1400,
       repProfit: 1400,
       ownerProfit: 1600,
       status: "out_for_delivery",
+      stockDeducted: false,
       driverId: "DRV-01",
       driverNotes: "الزبونة أكدت موعد الاستلام اليوم.",
       driverInquiryOpen: false,
       createdAt: "2026-11-17T08:20:00Z"
+    },
+    {
+      id: "ORD-2026-004",
+      date: "2026-11-18 11:10",
+      orderSource: "owner", // طلبية مباشرة من صاحب المتجر مرتبطة بالمخزون وعامل التوصيل
+      repId: "OWNER",
+      repName: "صاحب المتجر (طلب مباشر)",
+      customerName: "عبد الرحمن بوزيد",
+      customerPhone: "0554778899",
+      wilaya: "البليدة",
+      commune: "بوفاريك",
+      address: "شارع الأمير عبد القادر رقم 22",
+      productId: "PRD-104",
+      productName: "حقيبة نسائية عصرية كتف",
+      quantity: 1,
+      costPrice: 1750,
+      basePrice: 2800,
+      sellingPrice: 3500,
+      standardDeliveryFee: 500,
+      chargedDeliveryFee: 500,
+      deliverySubsidy: 0,
+      totalCustomerAmount: 4000,
+      grossRepProfit: 0,
+      repProfit: 0,
+      ownerProfit: 1750, // كامل الربح لصاحب المتجر في طلبياته المباشرة
+      status: "out_for_delivery",
+      stockDeducted: false,
+      driverId: "DRV-01",
+      driverNotes: "طلبية خاصة بصاحب المتجر جاهزة للتسليم اليوم.",
+      driverInquiryOpen: false,
+      createdAt: "2026-11-18T11:10:00Z"
+    }
+  ],
+
+  // سجل حركة المخزون التلقائي (يرتبط بتأكيد التسليم من عامل التوصيل)
+  stockMovements: [
+    {
+      id: "MOV-1001",
+      date: "2026-11-17 09:15",
+      orderId: "ORD-2026-001",
+      orderSource: "rep",
+      productId: "PRD-101",
+      productName: "عطر فاخر رويال 100 مل",
+      quantity: 1,
+      stockBefore: 29,
+      stockAfter: 28,
+      type: "delivery_confirmed",
+      actor: "ياسين التوصيل السريع (عامل التوصيل)",
+      note: "خصم تلقائي من المخزون مباشرة بعد تأكيد تسليم الطلبية #ORD-2026-001 للزبون"
+    }
+  ],
+
+  // سجل الأمان والعمليات الحساسة (High Security Audit Log)
+  securityLogs: [
+    {
+      id: "SEC-101",
+      time: "2026-11-18 11:20",
+      event: "طلب تسجيل حساب جديد (عامل توصيل)",
+      actor: "كريم بوعلام للتوصيل (0668112233)",
+      status: "pending_approval",
+      details: "تم حجب الدخول التلقائي وإحالة الطلب لصاحب المتجر للموافقة الأمنية."
+    },
+    {
+      id: "SEC-100",
+      time: "2026-11-17 16:45",
+      event: "طلب تسجيل حساب جديد (مندوبة مبيعات)",
+      actor: "خديجة منصوري (0779998877)",
+      status: "pending_approval",
+      details: "تم حجب الدخول التلقائي وإحالة الطلب لصاحب المتجر للموافقة الأمنية."
     }
   ],
 
