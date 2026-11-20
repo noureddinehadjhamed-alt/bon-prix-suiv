@@ -58,6 +58,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDGYWNwsxjzyWzCYeMJD0BLoa4a7D3Vgkk",
@@ -71,13 +72,17 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
+  const googleProvider = new GoogleAuthProvider();
+  googleProvider.setCustomParameters({ prompt: "select_account" });
+
   window.db = db;
-  window.fbSync = { db, doc, getDoc, setDoc, onSnapshot };
+  window.fbSync = { db, doc, getDoc, setDoc, onSnapshot, auth, googleProvider, signInWithPopup };
 
   if (window.store && typeof window.store.initCloudSync === "function") {
     window.store.initCloudSync();
   }
-  console.log("تم الاتصال بقاعدة بيانات Firebase بنجاح!");
+  console.log("تم الاتصال بقاعدة بيانات Firebase وخدمة حسابات Google بنجاح!");
 </script>
 </body>
 </html>

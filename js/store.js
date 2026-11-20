@@ -30,9 +30,18 @@ class Store {
             adminUser.email = "noureddinehadjhamed1992@gmail.com";
             adminUser.authProvider = "google";
           }
+          const defaultRepEmails = {
+            "USR-002": "fatima.rep@gmail.com",
+            "USR-003": "meriem.rep@gmail.com",
+            "USR-004": "sara.rep@gmail.com"
+          };
           parsed.users.forEach(u => {
             if (!u.securityPin) u.securityPin = "1234";
             if (!u.requestedRole) u.requestedRole = u.role === "pending" ? "rep" : u.role;
+            if (!u.email && defaultRepEmails[u.id]) {
+              u.email = defaultRepEmails[u.id];
+              u.authProvider = "google";
+            }
           });
         }
         if (!parsed.deliveryRates || parsed.deliveryRates.length === 0) {
@@ -113,6 +122,19 @@ class Store {
   _applyRemoteState(remoteData) {
     this._isApplyingRemote = true;
     try {
+      const defaultRepEmails = {
+        "USR-002": "fatima.rep@gmail.com",
+        "USR-003": "meriem.rep@gmail.com",
+        "USR-004": "sara.rep@gmail.com"
+      };
+      if (remoteData && Array.isArray(remoteData.users)) {
+        remoteData.users.forEach(u => {
+          if (!u.email && defaultRepEmails[u.id]) {
+            u.email = defaultRepEmails[u.id];
+            u.authProvider = "google";
+          }
+        });
+      }
       this.state = remoteData;
       localStorage.setItem(this.storageKey, JSON.stringify(this.state));
       if (this.currentUser) {
@@ -257,13 +279,18 @@ class Store {
   }
 
   getUserByPhone(phone) {
-    return this.getUsers().find(u => u.phone === phone);
+    if (!phone) return null;
+    const clean = phone.trim().replace(/\s+/g, '');
+    const users = this.getUsers();
+    return users.find(u => u.phone === clean && u.status === "active") || users.find(u => u.phone === clean);
   }
 
   getUserByEmail(email) {
     if (!email) return null;
     const cleanEmail = email.trim().toLowerCase();
-    return this.getUsers().find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    const users = this.getUsers();
+    return users.find(u => u.email && u.email.toLowerCase() === cleanEmail && u.status === "active") ||
+           users.find(u => u.email && u.email.toLowerCase() === cleanEmail);
   }
 
   getUserByRole(role) {
@@ -275,18 +302,13 @@ class Store {
   }
 
   // Register a new user (requires Store Owner approval before access!)
-  registerUser({ name, phone, email = "", password, securityPin = "1234", requestedRole = "rep", wilaya = "الجزائر العاصمة", note = "" }) {
+  registerUser({ name, phone, email = "", password, requestedRole = "rep", wilaya = "الجزائر العاصمة", note = "" }) {
     if (!name || !phone || !password) {
       throw new Error("يرجى ملء جميع الحقول المطلوبة (الاسم، الهاتف، وكلمة المرور)");
     }
 
     if (password.trim().length < 3) {
       throw new Error("درجة الأمان: يرجى اختيار كلمة مرور قوية (3 أحرف أو أرقام على الأقل)");
-    }
-
-    const cleanPin = (securityPin || "1234").trim();
-    if (!/^\d{4}$/.test(cleanPin)) {
-      throw new Error("درجة الأمان: رمز الأمان الشخصي (PIN) يجب أن يتكون من 4 أرقام (مثال: 1234)");
     }
 
     const cleanPhone = phone.trim().replace(/\s+/g, '');
@@ -305,7 +327,6 @@ class Store {
       phone: cleanPhone,
       email: email.trim().toLowerCase(),
       password: password.trim(),
-      securityPin: cleanPin,
       role: "pending", // Blocked until Store Owner approves!
       requestedRole: validRequestedRole,
       wilaya: (wilaya || "الجزائر العاصمة").trim(),
@@ -326,8 +347,8 @@ class Store {
     return newUser;
   }
 
-  // High-Security Login Authentication (Phone/Email + Password + Optional/Verified Security PIN)
-  loginUser(identifier, password, securityPin = "") {
+  // High-Security Login Authentication (Phone/Email + Password)
+  loginUser(identifier, password) {
     const now = Date.now();
     if (this.lockoutUntil && now < this.lockoutUntil) {
       const remainingSec = Math.ceil((this.lockoutUntil - now) / 1000);
@@ -353,15 +374,6 @@ class Store {
       throw new Error("البريد الإلكتروني / رقم الهاتف أو كلمة المرور غير صحيحة!");
     }
 
-    // Verify 4-digit security PIN if provided
-    const expectedPin = user.securityPin || "1234";
-    if (securityPin && securityPin.trim() !== "" && securityPin.trim() !== expectedPin) {
-      this.failedAttempts = (this.failedAttempts || 0) + 1;
-      this.addSecurityLog("فشل التحقق من رمز الأمان PIN", `${user.name} (${user.phone})`, "warning", "كلمة المرور صحيحة لكن رمز الأمان PIN غير مطابق");
-      this.saveState();
-      throw new Error("رمز الأمان الشخصي (PIN) غير صحيح!");
-    }
-
     if (user.status === "suspended") {
       throw new Error("🔒 هذا الحساب مجمد مؤقتاً من طرف صاحب المتجر (المسير العام).");
     }
@@ -369,7 +381,7 @@ class Store {
     this.failedAttempts = 0;
     this.lockoutUntil = 0;
     this.addSecurityLog(
-      "تسجيل دخول ناجح (تحقق مزدوج)",
+      "تسجيل دخول ناجح",
       `${user.name} (${user.phone})`,
       "success",
       `الدور: ${user.role === 'admin' ? 'صاحب المتجر' : user.role === 'rep' ? 'مندوبة' : user.role === 'driver' ? 'عامل توصيل' : 'قيد انتظار الموافقة'}`
@@ -379,8 +391,8 @@ class Store {
     return user;
   }
 
-  // Google Sign-In for Admin (Owner), Sales Reps, and Delivery Drivers
-  loginWithGoogle({ email, name = "", phone = "", password = "", requestedRole = "rep" }) {
+  // Google Sign-In for Sales Reps (المندوبات), Admin (Owner), and Delivery Drivers
+  loginWithGoogle({ email, name = "", phone = "", password = "", securityPin = "1234", wilaya = "الجزائر العاصمة", requestedRole = "rep", isOAuthVerified = false }) {
     const cleanEmail = (email || "").trim().toLowerCase();
     if (!cleanEmail || !cleanEmail.includes("@")) {
       throw new Error("يرجى إدخال بريد Google الإلكتروني الصحيح (مثال: name@gmail.com)");
@@ -392,7 +404,7 @@ class Store {
       ((adminUser.email && adminUser.email.toLowerCase() === cleanEmail) ||
         cleanEmail === "noureddinehadjhamed1992@gmail.com")
     ) {
-      if (password.trim() !== adminUser.password) {
+      if (!isOAuthVerified && password.trim() !== adminUser.password) {
         throw new Error("كلمة مرور المدير لحساب Google غير صحيحة!");
       }
       adminUser.email = cleanEmail;
@@ -403,36 +415,57 @@ class Store {
       return adminUser;
     }
 
-    const existingUser = this.getUserByEmail(cleanEmail);
+    const existingUser = this.getUserByEmail(cleanEmail) || (phone ? this.getUserByPhone(phone.trim().replace(/\s+/g, '')) : null);
     if (existingUser) {
-      if (existingUser.password && existingUser.password !== password.trim()) {
-        throw new Error("كلمة المرور غير صحيحة لهذا الحساب!");
+      if (!isOAuthVerified && existingUser.password && password.trim() !== "" && existingUser.password !== password.trim()) {
+        throw new Error("كلمة المرور غير صحيحة لحساب Google هذا!");
       }
+      if (existingUser.status === "suspended") {
+        throw new Error("🔒 هذا الحساب مجمد مؤقتاً من طرف صاحب المتجر.");
+      }
+      existingUser.email = cleanEmail;
+      existingUser.authProvider = "google";
+      this.addSecurityLog(
+        `دخول عبر حساب Google (${existingUser.role === 'rep' ? 'مندوبة' : existingUser.role === 'driver' ? 'عامل توصيل' : 'قيد المراجعة'})`,
+        `${existingUser.name} (${cleanEmail})`,
+        "success",
+        "تم التحقق من بريد Google وتفعيل الجلسة"
+      );
+      this.saveState();
       this.setCurrentUser(existingUser);
       return existingUser;
     }
 
+    // New Sales Rep (or Driver) signing in with Google for the first time -> Create pending approval request for Store Owner
     const derivedName = name.trim() || cleanEmail.split("@")[0];
     const cleanPhone = phone.trim().replace(/\s+/g, '') || cleanEmail;
+    const cleanPin = (securityPin && /^\d{4}$/.test(securityPin.trim())) ? securityPin.trim() : "1234";
     const id = "USR-" + Math.floor(100 + Math.random() * 900);
+    const validRole = requestedRole === "driver" ? "driver" : "rep";
     const newPendingUser = {
       id,
       name: derivedName,
       email: cleanEmail,
       phone: cleanPhone,
       password: password.trim() || "123",
-      securityPin: "1234",
+      securityPin: cleanPin,
       authProvider: "google",
       role: "pending",
-      requestedRole: requestedRole || "rep",
+      requestedRole: validRole,
+      wilaya: (wilaya || "الجزائر العاصمة").trim(),
       status: "pending",
       securityLevel: "high",
-      note: `طلب تسجيل عبر حساب Google (${cleanEmail}) بانتظار موافقة صاحب المتجر`,
+      note: `طلب تسجيل ${validRole === 'rep' ? 'مندوبة مبيعات' : 'عامل توصيل'} عبر حساب Google (${cleanEmail}) بانتظار موافقة صاحب المتجر`,
       createdAt: new Date().toISOString()
     };
 
     this.state.users.unshift(newPendingUser);
-    this.addSecurityLog("طلب تسجيل عبر Google", cleanEmail, "pending_approval", "بانتظار موافقة صاحب المتجر");
+    this.addSecurityLog(
+      `طلب تسجيل ${validRole === 'rep' ? 'مندوبة' : 'عامل توصيل'} عبر Google`,
+      `${derivedName} (${cleanEmail})`,
+      "pending_approval",
+      "تم إرسال طلب التسجيل بحساب Google إلى صاحب المتجر للموافقة"
+    );
     this.saveState();
     this.setCurrentUser(newPendingUser);
     return newPendingUser;
@@ -562,8 +595,8 @@ class Store {
     return user;
   }
 
-  // Admin resets a user's password / PIN
-  adminResetUserPassword(userId, newPassword, newPin = "") {
+  // Admin resets a user's password / PIN / Google email
+  adminResetUserPassword(userId, newPassword, newPin = "", newEmail = "") {
     const user = this.getUserById(userId);
     if (!user) throw new Error("المستخدم غير موجود!");
     if (!newPassword || newPassword.trim().length < 3) {
@@ -574,11 +607,15 @@ class Store {
     }
     user.password = newPassword.trim();
     if (newPin) user.securityPin = newPin.trim();
+    if (newEmail !== undefined && newEmail.trim() !== "") {
+      user.email = newEmail.trim().toLowerCase();
+      user.authProvider = "google";
+    }
     this.addSecurityLog(
-      "إعادة تعيين كلمة مرور من صاحب المتجر",
-      `${user.name} (${user.phone})`,
+      "تحديث حساب / كلمة مرور من صاحب المتجر",
+      `${user.name} (${user.email || user.phone})`,
       "info",
-      "تم تحديث كلمة المرور بواسطة المسير العام"
+      "تم تحديث بيانات الدخول وحساب Google بواسطة المسير العام"
     );
     this.saveState();
     return user;
@@ -594,10 +631,19 @@ class Store {
   }
 
   // Calculate quantity currently in active orders (pending / out_for_delivery) not yet delivered/deducted
+  // Supports both multi-product orders (o.items) and legacy single-product orders
   getReservedStock(productId) {
     return this.getOrders()
-      .filter(o => o.productId === productId && (o.status === "out_for_delivery" || o.status === "pending") && !o.stockDeducted)
-      .reduce((sum, o) => sum + (parseInt(o.quantity) || 0), 0);
+      .filter(o => (o.status === "out_for_delivery" || o.status === "pending") && !o.stockDeducted)
+      .reduce((sum, o) => {
+        if (Array.isArray(o.items) && o.items.length > 0) {
+          const itemQty = o.items
+            .filter(it => it.productId === productId)
+            .reduce((s, it) => s + (parseInt(it.quantity) || 0), 0);
+          return sum + itemQty;
+        }
+        return sum + (o.productId === productId ? (parseInt(o.quantity) || 0) : 0);
+      }, 0);
   }
 
   // Calculate available stock for new bookings (Actual Stock - Reserved in active deliveries)
@@ -615,6 +661,14 @@ class Store {
     const id = "PRD-" + Math.floor(100 + Math.random() * 900);
     const costPrice = parseFloat(product.costPrice) || 0;
     const basePrice = parseFloat(product.basePrice) || 0;
+    const defaultImg = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
+
+    let images = Array.isArray(product.images)
+      ? product.images.filter(img => typeof img === "string" && img.trim() !== "")
+      : [];
+    if (images.length === 0) {
+      images = [product.image || defaultImg];
+    }
 
     const newProduct = {
       id,
@@ -624,7 +678,8 @@ class Store {
       basePrice,
       stock: parseInt(product.stock) || 0,
       minStockAlert: parseInt(product.minStockAlert) || 5,
-      image: product.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80",
+      image: images[0],
+      images,
       description: product.description || ""
     };
     this.state.products.unshift(newProduct);
@@ -635,6 +690,14 @@ class Store {
   updateProduct(id, updates) {
     const p = this.getProductById(id);
     if (!p) return false;
+
+    let images = p.images && p.images.length > 0 ? p.images : (p.image ? [p.image] : []);
+    if (Array.isArray(updates.images) && updates.images.length > 0) {
+      images = updates.images.filter(img => typeof img === "string" && img.trim() !== "");
+    } else if (updates.image && updates.image !== p.image) {
+      images = [updates.image, ...images.filter(img => img !== updates.image)];
+    }
+
     Object.assign(p, {
       name: updates.name ?? p.name,
       category: updates.category ?? p.category,
@@ -642,7 +705,8 @@ class Store {
       basePrice: updates.basePrice !== undefined ? parseFloat(updates.basePrice) : p.basePrice,
       stock: updates.stock !== undefined ? parseInt(updates.stock) : p.stock,
       minStockAlert: updates.minStockAlert !== undefined ? parseInt(updates.minStockAlert) : p.minStockAlert,
-      image: updates.image ?? p.image,
+      image: images[0] || updates.image || p.image,
+      images,
       description: updates.description ?? p.description
     });
     this.saveState();
@@ -824,26 +888,57 @@ class Store {
   }
 
   createOrder(data) {
-    const product = this.getProductById(data.productId);
-    if (!product) throw new Error("المنتج غير موجود!");
-
-    const quantity = parseInt(data.quantity) || 1;
-    const reserved = this.getReservedStock(product.id);
-    const availableForBooking = Math.max(0, product.stock - reserved);
-
-    if (product.stock < quantity) {
-      throw new Error(`الكمية المطلوبة (${quantity}) تتجاوز المخزون الفعلي (${product.stock})!`);
-    }
-    if (availableForBooking < quantity) {
-      throw new Error(`الكمية المطلوبة (${quantity}) غير متاحة للحجز! المتوفر بالمخزن: ${product.stock} (منها ${reserved} محجوزة قيد التوصيل).`);
-    }
-
     const isOwnerOrder = data.orderSource === "owner" || data.repId === "OWNER";
-    const sellingPrice = parseFloat(data.sellingPrice) || product.basePrice;
 
-    // Requirement 4: Sales Rep must add her profit on top of the Store Owner's Reference Price (basePrice)
-    if (!isOwnerOrder && sellingPrice < product.basePrice) {
-      throw new Error(`سعر البيع (${sellingPrice} دج) لا يمكن أن يكون أقل من السعر المرجعي الذي حدده صاحب المتجر (${product.basePrice} دج)!`);
+    // Build normalized items array (supports multi-product orders OR legacy single-product)
+    const rawItems = Array.isArray(data.items) && data.items.length > 0
+      ? data.items
+      : [{ productId: data.productId, quantity: data.quantity, sellingPrice: data.sellingPrice }];
+
+    if (rawItems.length === 0) {
+      throw new Error("يرجى اختيار منتج واحد على الأقل!");
+    }
+
+    // Aggregate requested quantities per productId to validate stock accurately
+    const qtyByProduct = {};
+    const resolvedItems = [];
+
+    for (const raw of rawItems) {
+      const product = this.getProductById(raw.productId);
+      if (!product) throw new Error("أحد المنتجات المختارة غير موجود!");
+
+      const quantity = parseInt(raw.quantity) || 1;
+      if (quantity < 1) throw new Error(`الكمية للمنتج (${product.name}) يجب أن تكون 1 على الأقل!`);
+
+      qtyByProduct[product.id] = (qtyByProduct[product.id] || 0) + quantity;
+
+      const sellingPrice = parseFloat(raw.sellingPrice) || product.basePrice;
+      if (!isOwnerOrder && sellingPrice < product.basePrice) {
+        throw new Error(`سعر البيع للمنتج "${product.name}" (${sellingPrice} دج) لا يمكن أن يكون أقل من السعر المرجعي (${product.basePrice} دج)!`);
+      }
+
+      resolvedItems.push({
+        productId: product.id,
+        productName: product.name,
+        quantity,
+        costPrice: product.costPrice || 0,
+        basePrice: product.basePrice,
+        sellingPrice
+      });
+    }
+
+    // Check stock availability for each distinct product
+    for (const [prodId, totalRequestedQty] of Object.entries(qtyByProduct)) {
+      const product = this.getProductById(prodId);
+      const reserved = this.getReservedStock(prodId);
+      const availableForBooking = Math.max(0, product.stock - reserved);
+
+      if (product.stock < totalRequestedQty) {
+        throw new Error(`الكمية المطلوبة من "${product.name}" (${totalRequestedQty}) تتجاوز المخزون الفعلي (${product.stock})!`);
+      }
+      if (availableForBooking < totalRequestedQty) {
+        throw new Error(`الكمية المطلوبة من "${product.name}" (${totalRequestedQty}) غير متاحة للحجز! المتوفر: ${product.stock} (محجوز قيد التوصيل: ${reserved}).`);
+      }
     }
 
     const standardDeliveryFee = parseFloat(data.standardDeliveryFee) || 0;
@@ -855,33 +950,38 @@ class Store {
       throw new Error("سعر التوصيل لا يمكن أن يكون سالباً!");
     }
 
-    // Requirement 5: Store Owner sets delivery prices; Sales Rep can modify/discount delivery price
-    // provided that the difference is deducted from her profit!
     if (!isOwnerOrder && chargedDeliveryFee > standardDeliveryFee) {
       throw new Error(`سعر التوصيل الرسمي يحدده صاحب المتجر (${standardDeliveryFee} دج). يمكنكِ الإبقاء عليه أو تخفيضه للزبون مع خصم الفارق من ربحكِ.`);
     }
 
     const deliverySubsidy = Math.max(0, standardDeliveryFee - chargedDeliveryFee);
-    const grossRepProfit = isOwnerOrder ? 0 : (sellingPrice - product.basePrice) * quantity;
+    const totalQuantity = resolvedItems.reduce((s, it) => s + it.quantity, 0);
+    const totalCost = resolvedItems.reduce((s, it) => s + (it.costPrice * it.quantity), 0);
+    const totalBase = resolvedItems.reduce((s, it) => s + (it.basePrice * it.quantity), 0);
+    const totalProductSelling = resolvedItems.reduce((s, it) => s + (it.sellingPrice * it.quantity), 0);
+    const grossRepProfit = isOwnerOrder ? 0 : (totalProductSelling - totalBase);
 
     if (!isOwnerOrder && deliverySubsidy > grossRepProfit) {
       throw new Error(`فارق تخفيض سعر التوصيل (${deliverySubsidy} دج) يتجاوز إجمالي ربحكِ المضاف فوق السعر المرجعي (${grossRepProfit} دج)! يرجى زيادة سعر البيع أو تقليل تخفيض التوصيل.`);
     }
 
     const repProfit = isOwnerOrder ? 0 : (grossRepProfit - deliverySubsidy);
-    const totalCustomerAmount = (sellingPrice * quantity) + chargedDeliveryFee;
+    const totalCustomerAmount = totalProductSelling + chargedDeliveryFee;
     const ownerProfit = isOwnerOrder
-      ? (((sellingPrice - (product.costPrice || 0)) * quantity) - deliverySubsidy)
-      : ((product.basePrice - (product.costPrice || 0)) * quantity);
+      ? ((totalProductSelling - totalCost) - deliverySubsidy)
+      : (totalBase - totalCost);
 
     const rep = isOwnerOrder ? null : this.getRepById(data.repId);
-
-    // NOTE (Requirement 3): We do NOT deduct product.stock here!
-    // Stock is deducted immediately when the Delivery Driver confirms delivery in markOrderDelivered().
 
     const now = new Date();
     const dateStr = now.toISOString().replace("T", " ").slice(0, 16);
     const orderId = "ORD-" + now.getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
+
+    const summaryProductName = resolvedItems.length === 1
+      ? resolvedItems[0].productName
+      : resolvedItems.map(it => `${it.productName} (x${it.quantity})`).join(" + ");
+
+    const defaultDriverId = (this.state.drivers && this.state.drivers.length > 0) ? this.state.drivers[0].id : "";
 
     const newOrder = {
       id: orderId,
@@ -894,12 +994,16 @@ class Store {
       wilaya: data.wilaya || "",
       commune: data.commune || "",
       address: data.address,
-      productId: product.id,
-      productName: product.name,
-      quantity,
-      costPrice: product.costPrice || 0,
-      basePrice: product.basePrice,
-      sellingPrice,
+      items: resolvedItems,
+      productId: resolvedItems[0].productId,
+      productName: summaryProductName,
+      quantity: totalQuantity,
+      costPrice: resolvedItems.length === 1 ? resolvedItems[0].costPrice : Math.round(totalCost / totalQuantity),
+      basePrice: resolvedItems.length === 1 ? resolvedItems[0].basePrice : Math.round(totalBase / totalQuantity),
+      sellingPrice: resolvedItems.length === 1 ? resolvedItems[0].sellingPrice : Math.round(totalProductSelling / totalQuantity),
+      totalCost,
+      totalBase,
+      totalProductSelling,
       standardDeliveryFee,
       chargedDeliveryFee,
       deliverySubsidy,
@@ -908,8 +1012,8 @@ class Store {
       repProfit,
       ownerProfit,
       status: "out_for_delivery",
-      stockDeducted: false, // Will be deducted immediately upon delivery confirmation by driver!
-      driverId: data.driverId || "DRV-01",
+      stockDeducted: false, // Deducted immediately upon delivery confirmation by driver
+      driverId: data.driverId || defaultDriverId,
       driverNotes: data.customerNotes ? `ملاحظة الزبون: ${data.customerNotes}` : "",
       driverInquiryOpen: false,
       createdAt: now.toISOString()
@@ -920,37 +1024,53 @@ class Store {
     return newOrder;
   }
 
-  // Requirement 3: Stock decreases IMMEDIATELY AFTER delivery confirmation by the Delivery Driver
+  // Requirement 3: Stock decreases IMMEDIATELY AFTER delivery confirmation by the Delivery Driver (for ALL items in the order)
   markOrderDelivered(orderId, note = "", confirmedBy = "عامل التوصيل") {
     const order = this.getOrderById(orderId);
     if (!order) return false;
     if (order.status === "delivered" && order.stockDeducted) return true;
 
-    const product = this.getProductById(order.productId);
-    let stockBefore = product ? product.stock : 0;
-    let stockAfter = stockBefore;
+    const orderItems = (Array.isArray(order.items) && order.items.length > 0)
+      ? order.items
+      : [{ productId: order.productId, productName: order.productName, quantity: order.quantity || 1 }];
 
-    if (product && !order.stockDeducted) {
-      product.stock = Math.max(0, product.stock - (order.quantity || 1));
-      stockAfter = product.stock;
+    let firstBefore = 0;
+    let firstAfter = 0;
+    const deductedDetails = [];
+
+    if (!order.stockDeducted) {
+      if (!this.state.stockMovements) this.state.stockMovements = [];
+      orderItems.forEach((it, idx) => {
+        const product = this.getProductById(it.productId);
+        if (!product) return;
+        const stockBefore = product.stock;
+        const qty = parseInt(it.quantity) || 1;
+        product.stock = Math.max(0, product.stock - qty);
+        const stockAfter = product.stock;
+        if (idx === 0) {
+          firstBefore = stockBefore;
+          firstAfter = stockAfter;
+        }
+        deductedDetails.push(`${product.name}: -${qty} (${stockBefore} ← ${stockAfter})`);
+
+        this.state.stockMovements.unshift({
+          id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
+          date: new Date().toISOString().replace("T", " ").slice(0, 16),
+          orderId: order.id,
+          orderSource: order.orderSource || (order.repId === "OWNER" ? "owner" : "rep"),
+          productId: product.id,
+          productName: product.name,
+          quantity: qty,
+          stockBefore,
+          stockAfter,
+          type: "delivery_confirmed",
+          actor: confirmedBy,
+          note: `خصم فوري من المخزون (-${qty}) مباشرة بعد تأكيد تسليم الطلبية #${order.id}`
+        });
+      });
+
       order.stockDeducted = true;
       order.stockDeductedAt = new Date().toISOString();
-
-      if (!this.state.stockMovements) this.state.stockMovements = [];
-      this.state.stockMovements.unshift({
-        id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
-        date: new Date().toISOString().replace("T", " ").slice(0, 16),
-        orderId: order.id,
-        orderSource: order.orderSource || (order.repId === "OWNER" ? "owner" : "rep"),
-        productId: product.id,
-        productName: product.name,
-        quantity: order.quantity || 1,
-        stockBefore,
-        stockAfter,
-        type: "delivery_confirmed",
-        actor: confirmedBy,
-        note: `خصم فوري من المخزون (-${order.quantity}) مباشرة بعد تأكيد تسليم الطلبية #${order.id} (${order.repId === 'OWNER' ? 'طلبية صاحب المتجر' : 'طلبية المندوبة: ' + order.repName})`
-      });
     }
 
     order.status = "delivered";
@@ -966,14 +1086,15 @@ class Store {
       `تأكيد تسليم الطلبية #${order.id} وخصم المخزون`,
       confirmedBy,
       "success",
-      `تم خصم (${order.quantity}) من ${order.productName} | المخزون: ${stockBefore} ← ${stockAfter}`
+      deductedDetails.join(" | ") || `تم خصم (${order.quantity}) قطعة من المخزون`
     );
 
     this.saveState();
     return {
       order,
-      stockBefore,
-      stockAfter
+      stockBefore: firstBefore,
+      stockAfter: firstAfter,
+      deductedDetails
     };
   }
 
@@ -1006,12 +1127,17 @@ class Store {
 
     // Only restore stock if it had previously been deducted upon delivery
     if (order.status !== "returned" && order.stockDeducted) {
-      const product = this.getProductById(order.productId);
-      if (product) {
+      const orderItems = (Array.isArray(order.items) && order.items.length > 0)
+        ? order.items
+        : [{ productId: order.productId, productName: order.productName, quantity: order.quantity || 1 }];
+
+      if (!this.state.stockMovements) this.state.stockMovements = [];
+      orderItems.forEach(it => {
+        const product = this.getProductById(it.productId);
+        if (!product) return;
         const before = product.stock;
-        product.stock += (order.quantity || 1);
-        order.stockDeducted = false;
-        if (!this.state.stockMovements) this.state.stockMovements = [];
+        const qty = parseInt(it.quantity) || 1;
+        product.stock += qty;
         this.state.stockMovements.unshift({
           id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
           date: new Date().toISOString().replace("T", " ").slice(0, 16),
@@ -1019,14 +1145,15 @@ class Store {
           orderSource: order.orderSource || "rep",
           productId: product.id,
           productName: product.name,
-          quantity: order.quantity || 1,
+          quantity: qty,
           stockBefore: before,
           stockAfter: product.stock,
           type: "order_returned",
           actor: "عامل التوصيل / الإدارة",
-          note: `إرجاع الكمية (+${order.quantity}) للمخزون بعد إلغاء/إرجاع الطلبية #${order.id}`
+          note: `إرجاع الكمية (+${qty}) للمخزون بعد إلغاء/إرجاع الطلبية #${order.id}`
         });
-      }
+      });
+      order.stockDeducted = false;
     }
 
     order.status = "returned";
@@ -1107,8 +1234,8 @@ class Store {
         ? o.totalCustomerAmount
         : ((o.sellingPrice || 0) * (o.quantity || 1));
 
-      const orderBaseTotal = (o.basePrice || 0) * (o.quantity || 1);
-      const orderCostTotal = (o.costPrice || 0) * (o.quantity || 1);
+      const orderBaseTotal = o.totalBase !== undefined ? o.totalBase : ((o.basePrice || 0) * (o.quantity || 1));
+      const orderCostTotal = o.totalCost !== undefined ? o.totalCost : ((o.costPrice || 0) * (o.quantity || 1));
       const orderOwnerProfit = orderBaseTotal - orderCostTotal;
 
       if (o.status === "delivered") {

@@ -140,43 +140,51 @@ function renderLoginForm() {
         <span><strong>درجة أمان عالية:</strong> الدخول محمي بكلمة المرور ورمز الأمان الشخصي (PIN) وموافقة صاحب المتجر.</span>
       </div>
 
-      <!-- Google Sign-In Button for Admin -->
-      <button type="button" onclick="openGoogleLoginModal()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-blue-500 font-extrabold text-xs py-2.5 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2.5">
-        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
-          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
-          <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
-          <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
-          <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
-        </svg>
-        <span>الدخول عبر حساب Google (خاص بصاحب المتجر 👑)</span>
-      </button>
+      <!-- Google Sign-In Buttons for Sales Reps (المندوبات) and Store Owner -->
+      <div class="space-y-2">
+        <button type="button" onclick="openGoogleLoginModal('rep')" class="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-extrabold text-xs py-3 px-4 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2.5">
+          <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+              <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+            </svg>
+          </div>
+          <span>الدخول بحساب Google للمندوبات 🌸</span>
+        </button>
+
+        <button type="button" onclick="openGoogleLoginModal('admin')" class="w-full bg-white hover:bg-slate-50 text-slate-800 border-2 border-slate-200 hover:border-blue-500 font-extrabold text-xs py-2.5 px-4 rounded-2xl shadow-xs transition-all flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+            <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+            <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+          </svg>
+          <span>الدخول عبر حساب Google (خاص بصاحب المتجر 👑)</span>
+        </button>
+      </div>
 
       <div class="relative flex py-0.5 items-center">
         <div class="flex-grow border-t border-slate-200"></div>
-        <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-bold">أو الدخول برقم الهاتف ورمز الأمان</span>
+        <span class="flex-shrink mx-3 text-[11px] text-slate-400 font-bold">أو الدخول برقم الهاتف / البريد وكلمة السر</span>
         <div class="flex-grow border-t border-slate-200"></div>
       </div>
 
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3">
         <div>
-          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف أو البريد الإلكتروني:</label>
+          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف أو بريد Google:</label>
           <div class="relative">
             <input type="text" id="login-phone" required placeholder="05 / 06 / 07 أو بريد Gmail..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 font-mono text-slate-800 outline-none focus:border-red-600" />
             <i data-lucide="user" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2">
-          <div class="col-span-2">
-            <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
-            <div class="relative">
-              <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 text-slate-800 outline-none focus:border-red-600" />
-              <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
-            </div>
-          </div>
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">رمز PIN الأمني:</label>
-            <input type="password" id="login-pin" maxlength="4" value="1234" required placeholder="1234" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold text-slate-800 outline-none focus:border-red-600" />
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">كلمة المرور (الرقم السري):</label>
+          <div class="relative">
+            <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-9 text-slate-800 outline-none focus:border-red-600" />
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
           </div>
         </div>
 
@@ -185,25 +193,6 @@ function renderLoginForm() {
           دخول آمن إلى حسابي
         </button>
       </form>
-
-      <!-- Quick Demo Role Switcher for Easy Inspection -->
-      <div class="pt-3 border-t border-slate-200 space-y-2">
-        <span class="block text-[11px] font-bold text-slate-500 text-center">⚡ دخول سريع للتجربة ومعاينة الأدوار الثلاثة:</span>
-        <div class="grid grid-cols-3 gap-1.5">
-          <button type="button" onclick="quickLogin('0550000000', 'admin')" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
-            <span>👑 صاحب المتجر</span>
-            <span class="text-[9px] text-slate-300 font-normal">المسير العام</span>
-          </button>
-          <button type="button" onclick="quickLogin('0551234567', '123')" class="p-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
-            <span>🌸 المندوبة</span>
-            <span class="text-[9px] text-pink-100 font-normal">فاطمة الزهراء</span>
-          </button>
-          <button type="button" onclick="quickLogin('0555987654', '123')" class="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex flex-col items-center gap-0.5 shadow-xs">
-            <span>🚚 عامل التوصيل</span>
-            <span class="text-[9px] text-emerald-100 font-normal">ياسين التوصيل</span>
-          </button>
-        </div>
-      </div>
     </div>
   `;
 }
@@ -249,20 +238,30 @@ function renderRegisterForm() {
         </div>
       </div>
 
-      <div>
-        <label class="block font-bold text-slate-700 mb-1">رقم الهاتف (معرف الدخول):</label>
-        <input type="tel" id="reg-phone" required placeholder="05 / 06 / 07 ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono focus:border-red-600" />
-      </div>
+      <button type="button" onclick="openGoogleLoginModal('rep')" class="w-full bg-pink-50 hover:bg-pink-100 text-pink-900 border-2 border-pink-300 font-extrabold text-xs py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 transition-all">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+          <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+          <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+          <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+        </svg>
+        <span>التسجيل والدخول للمندوبة بحساب Google 🌸</span>
+      </button>
 
-      <div class="grid grid-cols-3 gap-2">
-        <div class="col-span-2">
-          <label class="block font-bold text-slate-700 mb-1">كلمة المرور القوية:</label>
-          <input type="password" id="reg-password" required minlength="4" placeholder="اختر كلمة مرور قوية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">رقم الهاتف:</label>
+          <input type="tel" id="reg-phone" required placeholder="05 / 06 / 07 ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono focus:border-red-600" />
         </div>
         <div>
-          <label class="block font-bold text-slate-700 mb-1">رمز PIN (4 أرقام):</label>
-          <input type="password" id="reg-pin" required pattern="\\d{4}" maxlength="4" value="1234" placeholder="1234" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-red-600" />
+          <label class="block font-bold text-slate-700 mb-1">بريد Google (Gmail):</label>
+          <input type="email" id="reg-email" placeholder="name@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-mono focus:border-red-600" />
         </div>
+      </div>
+
+      <div>
+        <label class="block font-bold text-slate-700 mb-1">كلمة المرور (الرقم السري):</label>
+        <input type="password" id="reg-password" required minlength="3" placeholder="اختاري كلمة مرور خاصة بكِ" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
       </div>
 
       <div>
@@ -348,12 +347,10 @@ function handleLoginSubmit(e) {
   e.preventDefault();
   const phone = document.getElementById("login-phone").value;
   const password = document.getElementById("login-password").value;
-  const pinInput = document.getElementById("login-pin");
-  const securityPin = pinInput ? pinInput.value : "";
 
   try {
-    const user = window.store.loginUser(phone, password, securityPin);
-    showToast(`مرحباً بك يا ${user.name}! تم التحقق الأمني بنجاح ✨`);
+    const user = window.store.loginUser(phone, password);
+    showToast(`مرحباً بك يا ${user.name}! تم الدخول بنجاح ✨`);
     renderApp();
   } catch (err) {
     alert(err.message);
@@ -364,9 +361,9 @@ function handleRegisterSubmit(e) {
   e.preventDefault();
   const name = document.getElementById("reg-name").value;
   const phone = document.getElementById("reg-phone").value;
+  const emailEl = document.getElementById("reg-email");
+  const email = emailEl ? emailEl.value : "";
   const password = document.getElementById("reg-password").value;
-  const pinEl = document.getElementById("reg-pin");
-  const securityPin = pinEl ? pinEl.value : "1234";
   const wilayaEl = document.getElementById("reg-wilaya");
   const wilaya = wilayaEl ? wilayaEl.value : "الجزائر العاصمة";
   const roleRadio = document.querySelector('input[name="reg-requested-role"]:checked');
@@ -374,7 +371,7 @@ function handleRegisterSubmit(e) {
   const note = document.getElementById("reg-note").value;
 
   try {
-    const user = window.store.registerUser({ name, phone, password, securityPin, requestedRole, wilaya, note });
+    const user = window.store.registerUser({ name, phone, email, password, requestedRole, wilaya, note });
     window.store.setCurrentUser(user);
     showToast("تم إرسال طلب تسجيلك لصاحب المتجر للموافقة عليه ⏳");
     renderApp();
@@ -399,18 +396,22 @@ function handleLogout() {
   renderApp();
 }
 
-function openGoogleLoginModal() {
+function openGoogleLoginModal(mode = "rep") {
   const container = document.getElementById("modal-container");
   if (!container) return;
 
+  const isRepMode = mode !== "admin";
   const adminUser = window.store.getUserByRole("admin");
-  const defaultEmail = (adminUser && adminUser.email) ? adminUser.email : "noureddinehadjhamed1992@gmail.com";
+  const defaultEmail = isRepMode
+    ? ""
+    : ((adminUser && adminUser.email) ? adminUser.email : "noureddinehadjhamed1992@gmail.com");
+  const deliveryRates = window.store.getDeliveryRates();
 
   container.innerHTML = `
     <div class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-      <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4">
-        <div class="text-center space-y-2">
-          <div class="w-12 h-12 mx-auto rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 max-h-[92vh] overflow-y-auto">
+        <div class="text-center space-y-1.5">
+          <div class="w-12 h-12 mx-auto rounded-full ${isRepMode ? 'bg-pink-50 border-pink-200' : 'bg-slate-50 border-slate-200'} border flex items-center justify-center">
             <svg class="w-6 h-6" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
               <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
@@ -418,24 +419,69 @@ function openGoogleLoginModal() {
               <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
             </svg>
           </div>
-          <h3 class="text-base font-black text-slate-900">تسجيل الدخول عبر Google</h3>
-          <p class="text-[11px] text-slate-500">للمدير العام 👑 أو للمندوبات وعامل التوصيل (مع تصنيف الدور من المدير)</p>
+          <h3 class="text-base font-black text-slate-900">
+            ${isRepMode ? 'دخول المندوبات بحساب Google 🌸' : 'دخول صاحب المتجر بحساب Google 👑'}
+          </h3>
+          <p class="text-[11px] text-slate-500">
+            ${isRepMode
+              ? 'ادخلي ببريدكِ على Google (Gmail). إذا كانت هذه أول مرة لكِ، سيُرسل طلب تسجيلكِ تلقائياً لصاحب المتجر للموافقة عليه.'
+              : 'الدخول لحساب المسير العام المرتبط ببريد Google.'}
+          </p>
         </div>
 
-        <form onsubmit="handleGoogleLoginSubmit(event)" class="space-y-3.5 text-xs">
+        ${isRepMode ? `
+          <!-- Official Google OAuth Popup Button -->
+          <button type="button" onclick="triggerFirebaseGooglePopup('rep')" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 px-4 rounded-2xl shadow-sm flex items-center justify-center gap-2 transition-all">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.3 0 6.08-1.09 8.1-2.96l-3.88-3.05c-1.08.72-2.45 1.16-4.22 1.16-3.25 0-6.01-2.19-6.99-5.14H1.01v3.14C3.02 21.14 7.21 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.01 14.01c-.25-.72-.39-1.5-.39-2.31s.14-1.59.39-2.31V6.25H1.01C.37 7.53 0 8.97 0 10.5s.37 2.97 1.01 4.25l4-3.14z"/>
+              <path fill="#EA4335" d="M12 4.75c1.8 0 3.41.62 4.68 1.84l3.51-3.51C18.07 1.19 15.3 0 12 0 7.21 0 3.02 2.86 1.01 6.85l4 3.14c.98-2.95 3.74-5.24 6.99-5.24z"/>
+            </svg>
+            <span>اختيار حسابي من نافذة Google المباشرة</span>
+          </button>
+
+          <div class="relative flex py-0.5 items-center">
+            <div class="flex-grow border-t border-slate-200"></div>
+            <span class="flex-shrink mx-2 text-[10px] text-slate-400 font-bold">أو إدخال بريد Gmail مباشرة</span>
+            <div class="flex-grow border-t border-slate-200"></div>
+          </div>
+        ` : ''}
+
+        <form onsubmit="handleGoogleLoginSubmit(event, '${mode}')" class="space-y-3 text-xs">
           <div>
             <label class="block font-bold text-slate-700 mb-1">بريد Google الإلكتروني (Gmail):</label>
-            <input type="email" id="google-login-email" required value="${defaultEmail}" placeholder="example@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-slate-800 outline-none focus:border-blue-600" />
+            <input type="email" id="google-login-email" required value="${defaultEmail}" placeholder="${isRepMode ? 'fatima.rep@gmail.com أو بريدكِ@gmail.com' : 'example@gmail.com'}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono text-slate-800 outline-none focus:border-pink-600" />
           </div>
 
+          ${isRepMode ? `
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">اسم المندوبة (للتسجيل الجديد):</label>
+                <input type="text" id="google-login-name" placeholder="مثلاً: أمينة منصوري" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 outline-none focus:border-pink-600" />
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">رقم الهاتف (للتواصل):</label>
+                <input type="tel" id="google-login-phone" placeholder="05 / 06 / 07 ..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono text-slate-800 outline-none focus:border-pink-600" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">الولاية:</label>
+              <select id="google-login-wilaya" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold text-slate-800 outline-none focus:border-pink-600">
+                ${deliveryRates.map(r => `<option value="${r.wilayaName}">${r.wilayaName}</option>`).join('')}
+              </select>
+            </div>
+          ` : ''}
+
           <div>
-            <label class="block font-bold text-slate-700 mb-1">كلمة المرور:</label>
-            <input type="password" id="google-login-password" required placeholder="كلمة مرور الحساب (للمدير: admin)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 outline-none focus:border-blue-600" />
+            <label class="block font-bold text-slate-700 mb-1">كلمة المرور بالتطبيق:</label>
+            <input type="password" id="google-login-password" required placeholder="${isRepMode ? 'كلمة مروركِ (أو اختاري كلمة مرور جديدة لطلبكِ)' : 'كلمة مرور المدير (admin)'}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 outline-none focus:border-pink-600" />
           </div>
 
           <div class="pt-2 flex gap-2">
-            <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-sm transition-colors">
-              متابعة بحساب Google
+            <button type="submit" class="flex-1 ${isRepMode ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 rounded-xl shadow-sm transition-colors">
+              ${isRepMode ? 'دخول / تسجيل المندوبة بحساب Google 🌸' : 'متابعة بحساب Google 👑'}
             </button>
             <button type="button" onclick="closeModal()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors">
               إلغاء
@@ -447,21 +493,67 @@ function openGoogleLoginModal() {
   `;
 }
 
-function handleGoogleLoginSubmit(e) {
+async function triggerFirebaseGooglePopup(mode = "rep") {
+  if (!window.fbSync || !window.fbSync.auth || !window.fbSync.signInWithPopup) {
+    alert("نافذة Google المنبثقة غير متاحة حالياً في هذا المتصفح، يرجى إدخال بريد Gmail في الحقل أدناه مباشرة.");
+    return;
+  }
+  try {
+    const result = await window.fbSync.signInWithPopup(window.fbSync.auth, window.fbSync.googleProvider);
+    const gUser = result.user;
+    if (!gUser || !gUser.email) {
+      throw new Error("لم يتم استلام البريد الإلكتروني من Google.");
+    }
+    const user = window.store.loginWithGoogle({
+      email: gUser.email,
+      name: gUser.displayName || gUser.email.split("@")[0],
+      phone: gUser.phoneNumber || "",
+      password: "123",
+      requestedRole: mode === "admin" ? "admin" : "rep",
+      isOAuthVerified: true
+    });
+    closeModal();
+    renderApp();
+    if (user.role === "admin") {
+      showToast(`تم تسجيل دخول صاحب المتجر عبر Google بنجاح! 👑`);
+    } else if (user.status === "pending" || user.role === "pending") {
+      showToast(`تم تسجيل حسابكِ عبر Google (${user.email}) وإرسال طلبكِ لصاحب المتجر للموافقة ⏳`);
+    } else {
+      showToast(`مرحباً بكِ يا ${user.name}! تم الدخول بحساب Google بنجاح 🌸`);
+    }
+  } catch (err) {
+    console.warn("Google OAuth popup notice:", err);
+    const emailInput = document.getElementById("google-login-email");
+    if (emailInput) emailInput.focus();
+    alert("لتسجيل الدخول فوراً دون نافذة منبثقة، اكتبي بريدكِ على Gmail وكلمة المرور في النموذج واضغطي متابعة.");
+  }
+}
+
+function handleGoogleLoginSubmit(e, mode = "rep") {
   e.preventDefault();
   const email = document.getElementById("google-login-email").value;
   const password = document.getElementById("google-login-password").value;
+  const nameEl = document.getElementById("google-login-name");
+  const phoneEl = document.getElementById("google-login-phone");
+  const wilayaEl = document.getElementById("google-login-wilaya");
 
   try {
-    const user = window.store.loginWithGoogle({ email, password });
+    const user = window.store.loginWithGoogle({
+      email,
+      name: nameEl ? nameEl.value : "",
+      phone: phoneEl ? phoneEl.value : "",
+      wilaya: wilayaEl ? wilayaEl.value : "الجزائر العاصمة",
+      password,
+      requestedRole: mode === "driver" ? "driver" : "rep"
+    });
     closeModal();
     renderApp();
     if (user.role === "admin") {
       showToast(`تم تسجيل دخول المدير عبر Google بنجاح! مرحباً ${user.name} 👑`);
     } else if (user.status === "pending" || user.role === "pending") {
-      showToast(`تم تسجيل حسابك عبر Google وإرسال إشعار للمدير لتصنيف دورك ⏳`);
+      showToast(`تم تسجيل حسابكِ عبر Google وإرسال طلبكِ لصاحب المتجر للموافقة ⏳`);
     } else {
-      showToast(`تم تسجيل الدخول عبر Google بنجاح! مرحباً ${user.name} ✨`);
+      showToast(`تم تسجيل الدخول عبر حساب Google بنجاح! مرحباً ${user.name} 🌸`);
     }
   } catch (err) {
     alert(err.message);
@@ -719,6 +811,7 @@ function renderAdminUsersTab() {
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-extrabold text-slate-900 text-sm">${u.name}</span>
                     <span class="font-mono text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">${u.phone}</span>
+                    ${u.email ? `<span class="font-mono text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-md">📧 ${u.email}</span>` : ''}
                     <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${isDriverReq ? 'bg-emerald-100 text-emerald-800' : 'bg-pink-100 text-pink-800'}">
                       ${isDriverReq ? '🚚 طلب تسجيل: عامل توصيل' : '🌸 طلب تسجيل: مندوبة تسويق'}
                     </span>
@@ -786,7 +879,10 @@ function renderAdminUsersTab() {
             <tbody class="divide-y divide-slate-100">
               ${activeUsers.map(u => `
                 <tr class="hover:bg-slate-50/80">
-                  <td class="p-3 font-bold text-slate-900">${u.name}</td>
+                  <td class="p-3 font-bold text-slate-900">
+                    ${u.name}
+                    ${u.email ? `<span class="block font-mono text-[10px] text-blue-600 font-normal">📧 ${u.email}</span>` : ''}
+                  </td>
                   <td class="p-3 font-mono text-slate-700">${u.phone}</td>
                   <td class="p-3">
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
@@ -898,7 +994,7 @@ function confirmDeleteUser(userId) {
 }
 
 // ==========================================
-// CHANGE PASSWORD & PIN MODALS (للجميع + إعادة تعيين من المدير)
+// CHANGE PASSWORD MODALS (للجميع + إعادة تعيين من المدير)
 // ==========================================
 function openChangePasswordModal() {
   const user = window.store.getCurrentUser();
@@ -908,7 +1004,7 @@ function openChangePasswordModal() {
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-          <h3 class="text-sm font-bold text-slate-900">🔐 تغيير كلمة السر ورمز الأمان (PIN)</h3>
+          <h3 class="text-sm font-bold text-slate-900">🔐 تغيير كلمة السر (الرقم السري)</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
         </div>
 
@@ -928,11 +1024,6 @@ function openChangePasswordModal() {
             <input type="password" id="cp-confirm" required minlength="3" placeholder="أعد كتابة كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600" />
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">رمز الأمان الشخصي الجديد (PIN من 4 أرقام - اختياري):</label>
-            <input type="password" id="cp-pin" pattern="\\d{4}" maxlength="4" placeholder="اتركه فارغاً للإبقاء على الرمز الحالي (${user.securityPin || '1234'})" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-blue-600" />
-          </div>
-
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
             <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">حفظ كلمة السر الجديدة</button>
@@ -950,7 +1041,6 @@ function handleChangePasswordSubmit(e) {
   const currentPass = document.getElementById("cp-current").value;
   const newPass = document.getElementById("cp-new").value;
   const confirmPass = document.getElementById("cp-confirm").value;
-  const newPin = document.getElementById("cp-pin").value;
 
   if (newPass.trim() !== confirmPass.trim()) {
     alert("كلمة السر الجديدة وتأكيدها غير متطابقتين!");
@@ -958,7 +1048,7 @@ function handleChangePasswordSubmit(e) {
   }
 
   try {
-    window.store.changeOwnPassword(user.id, currentPass, newPass, newPin);
+    window.store.changeOwnPassword(user.id, currentPass, newPass);
     closeModal();
     showToast("تم تغيير كلمة السر بنجاح 🔐");
   } catch (err) {
@@ -974,24 +1064,24 @@ function openAdminResetPasswordModal(userId) {
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-          <h3 class="text-sm font-bold text-slate-900">🔑 إعادة تعيين كلمة السر لـ: ${targetUser.name}</h3>
+          <h3 class="text-sm font-bold text-slate-900">🔑 بيانات دخول Google وكلمة السر لـ: ${targetUser.name}</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
         </div>
 
         <form onsubmit="handleAdminResetPasswordSubmit(event, '${targetUser.id}')" class="space-y-3 text-xs">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">كلمة السر الجديدة:</label>
-            <input type="text" id="arp-pass" required minlength="3" placeholder="أدخل كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600 font-mono" />
+            <label class="block font-bold text-slate-700 mb-1">بريد Google للمندوبة (Gmail):</label>
+            <input type="email" id="arp-email" value="${targetUser.email || ''}" placeholder="example@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600 font-mono" />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">رمز PIN الجديد (4 أرقام - اختياري):</label>
-            <input type="text" id="arp-pin" pattern="\\d{4}" maxlength="4" value="${targetUser.securityPin || '1234'}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center font-mono font-bold outline-none focus:border-blue-600" />
+            <label class="block font-bold text-slate-700 mb-1">كلمة السر الجديدة (الرقم السري):</label>
+            <input type="text" id="arp-pass" required minlength="3" value="${targetUser.password || '123'}" placeholder="أدخل كلمة السر الجديدة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-blue-600 font-mono" />
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md">تحديث كلمة السر</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md">حفظ وتحديث الحساب</button>
           </div>
         </form>
       </div>
@@ -1001,12 +1091,13 @@ function openAdminResetPasswordModal(userId) {
 
 function handleAdminResetPasswordSubmit(e, userId) {
   e.preventDefault();
+  const newEmailEl = document.getElementById("arp-email");
+  const newEmail = newEmailEl ? newEmailEl.value : "";
   const newPass = document.getElementById("arp-pass").value;
-  const newPin = document.getElementById("arp-pin").value;
   try {
-    window.store.adminResetUserPassword(userId, newPass, newPin);
+    window.store.adminResetUserPassword(userId, newPass, "", newEmail);
     closeModal();
-    showToast("تم إعادة تعيين كلمة السر بنجاح 🔑");
+    showToast("تم تحديث بريد Google وكلمة السر بنجاح 🔑");
     renderApp();
   } catch (err) {
     alert(err.message);
@@ -1225,10 +1316,15 @@ function renderAdminProducts() {
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
             <div>
               <div class="relative h-44 bg-slate-100 overflow-hidden">
-                <img src="${p.image}" class="w-full h-full object-cover" alt="${p.name}" />
+                <img id="admin-prd-img-${p.id}" src="${p.image}" onclick="openProductGalleryModal('${p.id}')" class="w-full h-full object-cover cursor-pointer" alt="${p.name}" />
                 <span class="absolute top-2.5 right-2.5 bg-slate-900/70 backdrop-blur-md text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
                   ${p.category}
                 </span>
+                ${(p.images && p.images.length > 1) ? `
+                  <button type="button" onclick="openProductGalleryModal('${p.id}')" class="absolute top-2.5 left-2.5 bg-slate-900/75 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                    🖼️ ${p.images.length} صور
+                  </button>
+                ` : ''}
                 <span class="absolute bottom-2.5 right-2.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
                   p.stock === 0
                     ? 'bg-red-600 text-white'
@@ -1239,6 +1335,13 @@ function renderAdminProducts() {
                   ${p.stock === 0 ? 'نفد من المخزن' : `المتوفر: ${p.stock} قطعة`}
                 </span>
               </div>
+              ${(p.images && p.images.length > 1) ? `
+                <div class="flex gap-1.5 px-3 pt-2 overflow-x-auto">
+                  ${p.images.map((imgUrl, idx) => `
+                    <img src="${imgUrl}" onclick="document.getElementById('admin-prd-img-${p.id}').src='${imgUrl}'" class="w-10 h-10 rounded-lg object-cover border border-slate-200 hover:border-red-500 cursor-pointer shrink-0" alt="صورة ${idx + 1}" />
+                  `).join('')}
+                </div>
+              ` : ''}
               
               <div class="p-4">
                 <div class="flex items-start justify-between gap-2 mb-1">
@@ -1805,6 +1908,69 @@ function renderRepTabContent(rep) {
   return renderRepNewOrderForm(rep);
 }
 
+// ==========================================
+// MULTI-PRODUCT ORDER ROW BUILDER (اختيار عدة منتجات في نفس الطلبية)
+// ==========================================
+function renderRepOrderItemRowHtml(products, isFirst = false) {
+  return `
+    <div class="rep-order-item-row p-3 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 relative">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[11px] font-bold text-slate-700">المنتج:</span>
+        ${!isFirst ? `<button type="button" onclick="removeRepOrderItemRow(this)" class="text-[11px] font-bold text-red-600 hover:bg-red-50 px-2 py-0.5 rounded-lg">✕ حذف</button>` : ''}
+      </div>
+      <select onchange="onRepItemProductChange(this)" required class="rep-item-product w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-semibold text-slate-800 outline-none focus:border-pink-500">
+        <option value="">-- اختر المنتج من المخزون --</option>
+        ${products.map(p => `
+          <option value="${p.id}" data-baseprice="${p.basePrice}" data-stock="${window.store.getAvailableStock(p.id)}">
+            ${p.name} (متاح: ${window.store.getAvailableStock(p.id)} | السعر المرجعي: ${p.basePrice} دج)
+          </option>
+        `).join('')}
+      </select>
+      <div class="grid grid-cols-2 gap-2.5">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">الكمية:</label>
+          <input type="number" value="1" min="1" max="50" oninput="updateRepProfitCalculator()" required class="rep-item-qty w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 outline-none focus:border-pink-500" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">سعر البيع للقطعة (فوق المرجعي):</label>
+          <input type="number" placeholder="مثلاً: 3200" oninput="updateRepProfitCalculator()" required class="rep-item-price w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-pink-700 outline-none focus:border-pink-500" />
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addRepOrderItemRow() {
+  const container = document.getElementById("rep-order-items-container");
+  if (!container) return;
+  const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderRepOrderItemRowHtml(products, false).trim();
+  container.appendChild(wrapper.firstElementChild);
+  updateRepProfitCalculator();
+}
+
+function removeRepOrderItemRow(btn) {
+  const row = btn.closest(".rep-order-item-row");
+  if (row) row.remove();
+  updateRepProfitCalculator();
+}
+
+function onRepItemProductChange(selectEl) {
+  const row = selectEl.closest(".rep-order-item-row");
+  if (!row) return;
+  const opt = selectEl.options[selectEl.selectedIndex];
+  const priceInput = row.querySelector(".rep-item-price");
+  if (opt && opt.value && priceInput) {
+    const base = parseFloat(opt.getAttribute("data-baseprice")) || 0;
+    if (!priceInput.value || parseFloat(priceInput.value) < base) {
+      priceInput.value = base;
+    }
+    priceInput.min = base;
+  }
+  updateRepProfitCalculator();
+}
+
 function renderRepNewOrderForm(rep) {
   const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
   const deliveryRates = window.store.getDeliveryRates();
@@ -1812,52 +1978,20 @@ function renderRepNewOrderForm(rep) {
   return `
     <div class="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-sm">
       <div class="mb-5 pb-4 border-b border-slate-100">
-        <h3 class="text-base font-bold text-slate-900">حجز طلبية زبون جديدة 🛍️</h3>
-        <p class="text-xs text-slate-500 mt-0.5">أضيفي ربحكِ فوق <strong>السعر المرجعي</strong> الذي حدده صاحب المتجر. سعر التوصيل يحدده صاحب المتجر، ويمكنكِ تخفيضه للزبون بشرط خصم الفارق من ربحكِ.</p>
+        <h3 class="text-base font-bold text-slate-900">حجز طلبية زبون جديدة (منتج واحد أو عدة منتجات) 🛍️</h3>
+        <p class="text-xs text-slate-500 mt-0.5">يمكنكِ إضافة عدة منتجات في نفس الطلبية. أضيفي ربحكِ فوق <strong>السعر المرجعي</strong> الذي حدده صاحب المتجر.</p>
       </div>
 
       <form onsubmit="handleRepSubmitOrder(event, '${rep.id}')" class="space-y-4">
         
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1.5">اختر المنتج المتوفر:</label>
-          <select id="order-product-select" onchange="updateRepProfitCalculator()" required class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-semibold text-slate-800 outline-none focus:border-pink-500">
-            <option value="">-- اختر المنتج من المخزون --</option>
-            ${products.map(p => `
-              <option value="${p.id}" data-baseprice="${p.basePrice}" data-stock="${window.store.getAvailableStock(p.id)}">
-                ${p.name} (متاح للحجز: ${window.store.getAvailableStock(p.id)} | السعر المرجعي: ${p.basePrice} دج)
-              </option>
-            `).join('')}
-          </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">الكمية المطلوبة:</label>
-            <input 
-              type="number" 
-              id="order-quantity" 
-              value="1" 
-              min="1" 
-              max="50" 
-              oninput="updateRepProfitCalculator()" 
-              required 
-              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-slate-800 outline-none focus:border-pink-500" 
-            />
+        <div class="space-y-3">
+          <div id="rep-order-items-container" class="space-y-2.5">
+            ${renderRepOrderItemRowHtml(products, true)}
           </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1.5">
-              سعر بيع المنتج النهائي للزبون:
-            </label>
-            <input 
-              type="number" 
-              id="order-selling-price" 
-              placeholder="مثلاً: 3200" 
-              oninput="updateRepProfitCalculator()" 
-              required 
-              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold text-pink-700 outline-none focus:border-pink-500" 
-            />
-          </div>
+          <button type="button" onclick="addRepOrderItemRow()" class="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-pink-300 bg-pink-50/50 hover:bg-pink-50 text-pink-700 font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all">
+            <span>➕</span>
+            <span>إضافة منتج آخر لنفس الطلبية</span>
+          </button>
         </div>
 
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
@@ -2066,16 +2200,28 @@ function renderRepCatalog(rep) {
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between">
             <div>
               <div class="relative h-40 bg-slate-100">
-                <img src="${p.image}" class="w-full h-full object-cover" alt="${p.name}" />
+                <img id="rep-prd-img-${p.id}" src="${p.image}" onclick="openProductGalleryModal('${p.id}')" class="w-full h-full object-cover cursor-pointer" alt="${p.name}" />
                 <span class="absolute top-2.5 right-2.5 bg-slate-900/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
                   ${p.category}
                 </span>
+                ${(p.images && p.images.length > 1) ? `
+                  <button type="button" onclick="openProductGalleryModal('${p.id}')" class="absolute top-2.5 left-2.5 bg-slate-900/75 text-white text-[10px] font-bold px-2 py-0.5 rounded-md">
+                    🖼️ ${p.images.length} صور
+                  </button>
+                ` : ''}
                 <span class="absolute bottom-2.5 right-2.5 text-xs font-bold px-2.5 py-0.5 rounded-lg ${
                   p.stock === 0 ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'
                 }">
                   ${p.stock === 0 ? 'غير متوفر' : `متوفر: ${p.stock} قطعة`}
                 </span>
               </div>
+              ${(p.images && p.images.length > 1) ? `
+                <div class="flex gap-1.5 px-3 pt-2 overflow-x-auto">
+                  ${p.images.map((imgUrl, idx) => `
+                    <img src="${imgUrl}" onclick="document.getElementById('rep-prd-img-${p.id}').src='${imgUrl}'" class="w-10 h-10 rounded-lg object-cover border border-slate-200 hover:border-pink-500 cursor-pointer shrink-0" alt="صورة ${idx + 1}" />
+                  `).join('')}
+                </div>
+              ` : ''}
               <div class="p-4">
                 <h4 class="font-bold text-slate-900 text-sm mb-1">${p.name}</h4>
                 <p class="text-xs text-slate-500 line-clamp-2 mb-3">${p.description}</p>
@@ -2483,6 +2629,7 @@ function showToast(message, type = "success") {
 
 // Add Product Modal with AI Image Generator
 function openAddProductModal() {
+  modalProductImages = [];
   const modal = document.getElementById("modal-container");
   modal.innerHTML = `
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
@@ -2559,11 +2706,11 @@ function openAddProductModal() {
             <input type="text" id="prd-category" placeholder="عطور / تجميل / إكسسوارات..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
           </div>
 
-          <!-- Product Image Box (Upload from Device + AI Generation) -->
+          <!-- Product Images Box (Multi-Image Upload from Device + AI Generation) -->
           <div class="space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
             <div class="flex items-center justify-between">
-              <label class="block font-bold text-slate-800 text-xs">صورة المنتج 🖼️:</label>
-              <span class="text-[10px] text-slate-500">رفع من الهاتف أو توليد بالذكاء الاصطناعي</span>
+              <label class="block font-bold text-slate-800 text-xs">صور المنتج (يمكنك تحميل عدة صور) 🖼️:</label>
+              <span id="prd-images-count" class="text-[10px] font-bold text-blue-600">0 صور مضافة</span>
             </div>
 
             <div class="relative w-full h-36 bg-white border-2 border-dashed border-slate-300 rounded-xl overflow-hidden flex items-center justify-center">
@@ -2572,15 +2719,17 @@ function openAddProductModal() {
               <div id="image-loading-overlay" class="hidden absolute inset-0 bg-slate-900/80 backdrop-blur-xs flex flex-col items-center justify-center text-white text-center p-3 z-10">
                 <div class="w-8 h-8 border-3 border-white/20 border-t-white rounded-full animate-spin mb-2"></div>
                 <span class="text-xs font-bold text-amber-300">جاري توليد صورة احترافية بالذكاء الاصطناعي... ✨</span>
-                <span class="text-[10px] text-slate-300 mt-1">يتم تصميم صورة تجارية إعلانية للمنتج</span>
               </div>
             </div>
+
+            <!-- Multi-Image Thumbnails Gallery -->
+            <div id="prd-images-gallery" class="flex flex-wrap gap-2 pt-1"></div>
 
             <div class="grid grid-cols-2 gap-2 pt-1">
               <label class="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-bold text-[11px] py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 shadow-xs transition-colors">
                 <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-600"></i>
-                <span>رفع من الهاتف 📷</span>
-                <input type="file" accept="image/*" class="hidden" onchange="handleProductImageUpload(event, 'prd-image', 'prd-image-preview')" />
+                <span>رفع عدة صور 📷</span>
+                <input type="file" accept="image/*" multiple class="hidden" onchange="handleProductImageUpload(event, 'prd-image', 'prd-image-preview', 'prd-images-gallery', 'prd-images-count')" />
               </label>
 
               <button type="button" onclick="generateProductImageAI('prd-image', 'prd-image-preview', 'prd-name')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-[11px] py-2 px-3 rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
@@ -2589,7 +2738,10 @@ function openAddProductModal() {
               </button>
             </div>
 
-            <input type="text" id="prd-image" value="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80" placeholder="أو الصق رابط صورة..." class="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-[10px] text-slate-500 outline-none focus:border-red-600" onchange="document.getElementById('prd-image-preview').src = this.value" />
+            <div class="flex gap-1.5">
+              <input type="text" id="prd-image" value="" placeholder="أو الصق رابط صورة واضغط + لإضافتها..." class="flex-1 bg-white border border-slate-200 rounded-lg p-1.5 text-[10px] text-slate-600 outline-none focus:border-red-600" />
+              <button type="button" onclick="addModalImageFromUrl('prd-image', 'prd-image-preview', 'prd-images-gallery', 'prd-images-count')" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg text-[10px] font-bold">+ إضافة</button>
+            </div>
           </div>
 
           <div>
@@ -2625,6 +2777,74 @@ function updateModalProfitCalc() {
   pctSpan.innerText = `${pct}%`;
 }
 
+let modalProductImages = [];
+
+function renderModalImageGallery(previewImgId = 'prd-image-preview', galleryId = 'prd-images-gallery', countId = 'prd-images-count') {
+  const gallery = document.getElementById(galleryId);
+  const countEl = document.getElementById(countId);
+  const preview = document.getElementById(previewImgId);
+  if (countEl) countEl.innerText = `${modalProductImages.length} صور مضافة`;
+  if (preview && modalProductImages.length > 0) preview.src = modalProductImages[0];
+  if (!gallery) return;
+
+  gallery.innerHTML = modalProductImages.map((src, idx) => `
+    <div class="relative group w-16 h-16 rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-red-500' : 'border-slate-200'} bg-white">
+      <img src="${src}" onclick="setMainModalProductImage(${idx}, '${previewImgId}', '${galleryId}', '${countId}')" class="w-full h-full object-cover cursor-pointer" title="اضغط لجعلها الصورة الرئيسية" />
+      ${idx === 0 ? `<span class="absolute bottom-0 inset-x-0 bg-red-600/85 text-white text-[8px] font-bold text-center py-0.5">رئيسية</span>` : ''}
+      <button type="button" onclick="removeModalProductImage(${idx}, '${previewImgId}', '${galleryId}', '${countId}')" class="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-slate-900/80 text-white text-[10px] flex items-center justify-center hover:bg-red-600">&times;</button>
+    </div>
+  `).join('');
+}
+
+function setMainModalProductImage(idx, previewImgId, galleryId, countId) {
+  if (idx <= 0 || idx >= modalProductImages.length) return;
+  const [chosen] = modalProductImages.splice(idx, 1);
+  modalProductImages.unshift(chosen);
+  renderModalImageGallery(previewImgId, galleryId, countId);
+}
+
+function removeModalProductImage(idx, previewImgId, galleryId, countId) {
+  modalProductImages.splice(idx, 1);
+  renderModalImageGallery(previewImgId, galleryId, countId);
+}
+
+function addModalImageFromUrl(inputId, previewImgId, galleryId, countId) {
+  const input = document.getElementById(inputId);
+  const url = input ? input.value.trim() : "";
+  if (!url) return;
+  modalProductImages.push(url);
+  input.value = "";
+  renderModalImageGallery(previewImgId, galleryId, countId);
+  showToast("تمت إضافة الصورة للمنتج 🖼️");
+}
+
+function openProductGalleryModal(productId) {
+  const p = window.store.getProductById(productId);
+  if (!p) return;
+  const imgs = (Array.isArray(p.images) && p.images.length > 0) ? p.images : [p.image];
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this) closeModal()">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-4 shadow-2xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-900">🖼️ صور المنتج: ${p.name} (${imgs.length})</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-700 text-xl">&times;</button>
+        </div>
+        <div class="w-full h-72 bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center">
+          <img id="lightbox-main-img" src="${imgs[0]}" class="w-full h-full object-contain" alt="${p.name}" />
+        </div>
+        ${imgs.length > 1 ? `
+          <div class="flex gap-2 overflow-x-auto pb-1">
+            ${imgs.map((src, i) => `
+              <img src="${src}" onclick="document.getElementById('lightbox-main-img').src='${src}'" class="w-16 h-16 rounded-xl object-cover border-2 border-slate-200 hover:border-red-500 cursor-pointer shrink-0" alt="صورة ${i + 1}" />
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+}
+
 function handleSaveProduct(e) {
   e.preventDefault();
   const name = document.getElementById("prd-name").value;
@@ -2633,17 +2853,22 @@ function handleSaveProduct(e) {
   const stock = document.getElementById("prd-stock").value;
   const category = document.getElementById("prd-category").value || "عام";
   const minStockAlert = document.getElementById("prd-min-alert").value;
-  const image = document.getElementById("prd-image").value || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
+  const extraUrl = document.getElementById("prd-image").value.trim();
+  const images = [...modalProductImages];
+  if (extraUrl) images.push(extraUrl);
+  const image = images[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
   const description = document.getElementById("prd-desc").value;
 
-  window.store.addProduct({ name, costPrice, basePrice, stock, category, minStockAlert, image, description });
+  window.store.addProduct({ name, costPrice, basePrice, stock, category, minStockAlert, image, images: images.length ? images : [image], description });
+  modalProductImages = [];
   closeModal();
-  showToast("تمت إضافة المنتج للمخزون وحساب نسبة أرباحك بنجاح ✨");
+  showToast(`تمت إضافة المنتج للمخزون مع ${Math.max(1, images.length)} صورة بنجاح ✨`);
 }
 
 function openEditProductModal(id) {
   const p = window.store.getProductById(id);
   if (!p) return;
+  modalProductImages = (Array.isArray(p.images) && p.images.length > 0) ? [...p.images] : (p.image ? [p.image] : []);
 
   const modal = document.getElementById("modal-container");
   modal.innerHTML = `
@@ -2704,11 +2929,13 @@ function openEditProductModal(id) {
               </div>
             </div>
 
+            <div id="edit-prd-images-gallery" class="flex flex-wrap gap-2 pt-1"></div>
+
             <div class="grid grid-cols-2 gap-2 pt-1">
               <label class="cursor-pointer bg-white hover:bg-slate-100 text-slate-800 font-bold text-[11px] py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 shadow-xs transition-colors">
                 <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-600"></i>
-                <span>رفع من الهاتف 📷</span>
-                <input type="file" accept="image/*" class="hidden" onchange="handleProductImageUpload(event, 'edit-prd-image', 'edit-prd-image-preview')" />
+                <span>رفع عدة صور 📷</span>
+                <input type="file" accept="image/*" multiple class="hidden" onchange="handleProductImageUpload(event, 'edit-prd-image', 'edit-prd-image-preview', 'edit-prd-images-gallery', 'edit-prd-images-count')" />
               </label>
 
               <button type="button" onclick="generateProductImageAI('edit-prd-image', 'edit-prd-image-preview', 'edit-prd-name', 'edit-image-loading-overlay')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-[11px] py-2 px-3 rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition-all active:scale-95">
@@ -2717,7 +2944,10 @@ function openEditProductModal(id) {
               </button>
             </div>
 
-            <input type="text" id="edit-prd-image" value="${p.image}" class="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-[10px] text-slate-500 outline-none focus:border-red-600" onchange="document.getElementById('edit-prd-image-preview').src = this.value" />
+            <div class="flex gap-1.5">
+              <input type="text" id="edit-prd-image" value="" placeholder="إضافة رابط صورة جديدة..." class="flex-1 bg-white border border-slate-200 rounded-lg p-1.5 text-[10px] text-slate-600 outline-none focus:border-red-600" />
+              <button type="button" onclick="addModalImageFromUrl('edit-prd-image', 'edit-prd-image-preview', 'edit-prd-images-gallery', 'edit-prd-images-count')" class="px-2.5 py-1 bg-slate-800 text-white rounded-lg text-[10px] font-bold">+ إضافة</button>
+            </div>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -2728,6 +2958,7 @@ function openEditProductModal(id) {
       </div>
     </div>
   `;
+  renderModalImageGallery('edit-prd-image-preview', 'edit-prd-images-gallery', 'edit-prd-images-count');
   if (window.lucide) window.lucide.createIcons();
 }
 
@@ -2738,11 +2969,14 @@ function handleUpdateProduct(e, id) {
   const basePrice = document.getElementById("edit-prd-base").value;
   const stock = document.getElementById("edit-prd-stock").value;
   const category = document.getElementById("edit-prd-cat").value;
-  const image = document.getElementById("edit-prd-image") ? document.getElementById("edit-prd-image").value : undefined;
+  const extraUrl = document.getElementById("edit-prd-image") ? document.getElementById("edit-prd-image").value.trim() : "";
+  const images = [...modalProductImages];
+  if (extraUrl) images.push(extraUrl);
 
-  window.store.updateProduct(id, { name, costPrice, basePrice, stock, category, image });
+  window.store.updateProduct(id, { name, costPrice, basePrice, stock, category, image: images[0], images });
+  modalProductImages = [];
   closeModal();
-  showToast("تم تحديث بيانات المنتج والصورة بنجاح ✓");
+  showToast("تم تحديث بيانات المنتج والصور بنجاح ✓");
 }
 
 function quickAdjustStock(id, delta) {
@@ -2808,54 +3042,53 @@ function generateProductImageAI(targetInputId = 'prd-image', previewImgId = 'prd
   tempImg.src = aiImageUrl;
 }
 
-// Device / Phone Camera Image Upload Helper
-function handleProductImageUpload(event, targetInputId = 'prd-image', previewImgId = 'prd-image-preview') {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+// Device / Phone Multi-Image Upload Helper
+function handleProductImageUpload(event, targetInputId = 'prd-image', previewImgId = 'prd-image-preview', galleryId = 'prd-images-gallery', countId = 'prd-images-count') {
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) return;
 
-  if (!file.type.startsWith('image/')) {
-    showToast("يرجى اختيار ملف صورة صالح!", "error");
-    return;
-  }
+  let addedCount = 0;
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 500;
+        let width = img.width;
+        let height = img.height;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const img = new Image();
-    img.onload = () => {
-      const maxDim = 600;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxDim) {
-          height = Math.round(height * (maxDim / width));
-          width = maxDim;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
         }
-      } else {
-        if (height > maxDim) {
-          width = Math.round(width * (maxDim / height));
-          height = maxDim;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        modalProductImages.push(compressedDataUrl);
+        addedCount++;
+        renderModalImageGallery(previewImgId, galleryId, countId);
+        if (addedCount === files.length) {
+          showToast(`تم رفع ${addedCount} صورة للمنتج بنجاح 📷`);
         }
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-      const preview = document.getElementById(previewImgId);
-      const targetInput = document.getElementById(targetInputId);
-
-      if (preview) preview.src = compressedDataUrl;
-      if (targetInput) targetInput.value = compressedDataUrl;
-
-      showToast("تم رفع صورة المنتج من جهازك بنجاح 📷");
+      };
+      img.src = e.target.result;
     };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+  event.target.value = "";
 }
 
 // Delivery Rates Modals
@@ -3000,29 +3233,40 @@ function onOrderWilayaChange() {
 }
 
 function updateRepProfitCalculator() {
-  const select = document.getElementById("order-product-select");
-  const qtyInput = document.getElementById("order-quantity");
-  const priceInput = document.getElementById("order-selling-price");
+  const rows = document.querySelectorAll(".rep-order-item-row");
   const standardDeliveryInput = document.getElementById("order-standard-delivery");
   const chargedDeliveryInput = document.getElementById("order-charged-delivery");
   const subsidyAlert = document.getElementById("delivery-subsidy-alert");
   const subsidyAmountText = document.getElementById("subsidy-amount-text");
 
-  if (!select || !qtyInput || !priceInput) return;
+  if (!rows || rows.length === 0) return;
 
-  const selectedOpt = select.options[select.selectedIndex];
-  const basePrice = selectedOpt && selectedOpt.value ? (parseFloat(selectedOpt.getAttribute("data-baseprice")) || 0) : 0;
-  const qty = parseInt(qtyInput.value) || 1;
-  const sellingPrice = parseFloat(priceInput.value) || 0;
+  let totalBase = 0;
+  let totalProductSelling = 0;
+  let grossRepProfit = 0;
+
+  rows.forEach(row => {
+    const select = row.querySelector(".rep-item-product");
+    const qtyInput = row.querySelector(".rep-item-qty");
+    const priceInput = row.querySelector(".rep-item-price");
+    if (!select || !qtyInput || !priceInput) return;
+
+    const selectedOpt = select.options[select.selectedIndex];
+    const basePrice = selectedOpt && selectedOpt.value ? (parseFloat(selectedOpt.getAttribute("data-baseprice")) || 0) : 0;
+    const qty = parseInt(qtyInput.value) || 0;
+    const sellingPrice = parseFloat(priceInput.value) || 0;
+
+    if (selectedOpt && selectedOpt.value && qty > 0) {
+      totalBase += basePrice * qty;
+      totalProductSelling += sellingPrice * qty;
+      grossRepProfit += Math.max(0, (sellingPrice - basePrice) * qty);
+    }
+  });
 
   const standardDelivery = standardDeliveryInput ? (parseFloat(standardDeliveryInput.value) || 0) : 0;
   const chargedDelivery = chargedDeliveryInput ? (parseFloat(chargedDeliveryInput.value) || 0) : standardDelivery;
-
   const deliverySubsidy = Math.max(0, standardDelivery - chargedDelivery);
 
-  const totalBase = basePrice * qty;
-  const totalProductSelling = sellingPrice * qty;
-  const grossRepProfit = Math.max(0, (sellingPrice - basePrice) * qty);
   const netRepProfit = Math.max(0, grossRepProfit - deliverySubsidy);
   const totalCustomerToPay = totalProductSelling + chargedDelivery;
 
@@ -3054,10 +3298,17 @@ function updateRepProfitCalculator() {
 
 function handleRepSubmitOrder(e, repId) {
   e.preventDefault();
-  const select = document.getElementById("order-product-select");
-  const productId = select.value;
-  const quantity = document.getElementById("order-quantity").value;
-  const sellingPrice = document.getElementById("order-selling-price").value;
+  const rows = document.querySelectorAll(".rep-order-item-row");
+  const items = [];
+  rows.forEach(row => {
+    const productId = row.querySelector(".rep-item-product")?.value;
+    const quantity = row.querySelector(".rep-item-qty")?.value;
+    const sellingPrice = row.querySelector(".rep-item-price")?.value;
+    if (productId) {
+      items.push({ productId, quantity, sellingPrice });
+    }
+  });
+
   const wilayaSelect = document.getElementById("order-wilaya-select");
   const wilaya = wilayaSelect ? wilayaSelect.value : "";
   const commune = document.getElementById("order-commune").value;
@@ -3071,9 +3322,7 @@ function handleRepSubmitOrder(e, repId) {
   try {
     const order = window.store.createOrder({
       repId,
-      productId,
-      quantity,
-      sellingPrice,
+      items,
       wilaya,
       commune,
       standardDeliveryFee,
@@ -3084,7 +3333,7 @@ function handleRepSubmitOrder(e, repId) {
       customerNotes
     });
 
-    showToast(`تم تسجيل الطلبية #${order.id} بنجاح وإرسالها للتوصيل 🚚`);
+    showToast(`تم تسجيل الطلبية #${order.id} (${items.length} منتج) بنجاح وإرسالها للتوصيل 🚚`);
     switchTab("myOrders");
   } catch (err) {
     alert(err.message);
@@ -3094,10 +3343,10 @@ function handleRepSubmitOrder(e, repId) {
 function prepareRepOrderWithProduct(productId) {
   switchTab("newOrder");
   setTimeout(() => {
-    const select = document.getElementById("order-product-select");
-    if (select) {
-      select.value = productId;
-      updateRepProfitCalculator();
+    const firstSelect = document.querySelector(".rep-item-product");
+    if (firstSelect) {
+      firstSelect.value = productId;
+      onRepItemProductChange(firstSelect);
     }
   }, 100);
 }
@@ -3344,6 +3593,52 @@ function adminMarkReturned(orderId) {
 // ==========================================
 // STORE OWNER DIRECT ORDER (طلبية صاحب المتجر مرتبطة بالمخزون)
 // ==========================================
+function renderAdminOrderItemRowHtml(products, isFirst = false) {
+  return `
+    <div class="ao-item-row p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-700">المنتج:</span>
+        ${!isFirst ? `<button type="button" onclick="removeAdminOrderItemRow(this)" class="text-[11px] font-bold text-red-600 hover:bg-red-50 px-1.5 py-0.5 rounded">✕ حذف</button>` : ''}
+      </div>
+      <select required onchange="onAdminItemProductChange(this)" class="ao-item-product w-full bg-white border border-slate-200 rounded-xl p-2 font-semibold">
+        <option value="">-- اختر المنتج --</option>
+        ${products.map(p => `<option value="${p.id}" data-base="${p.basePrice}" data-cost="${p.costPrice || 0}">${p.name} (متاح: ${window.store.getAvailableStock(p.id)} | مرجعي: ${p.basePrice} دج)</option>`).join('')}
+      </select>
+      <div class="grid grid-cols-2 gap-2">
+        <input type="number" min="1" value="1" required oninput="aoUpdate()" placeholder="الكمية" class="ao-item-qty w-full bg-white border border-slate-200 rounded-xl p-2 font-bold" />
+        <input type="number" min="0" required oninput="aoUpdate()" placeholder="سعر البيع للقطعة" class="ao-item-price w-full bg-white border border-slate-200 rounded-xl p-2 font-bold text-blue-700" />
+      </div>
+    </div>
+  `;
+}
+
+function addAdminOrderItemRow() {
+  const container = document.getElementById("ao-items-container");
+  if (!container) return;
+  const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
+  const wrap = document.createElement("div");
+  wrap.innerHTML = renderAdminOrderItemRowHtml(products, false).trim();
+  container.appendChild(wrap.firstElementChild);
+  aoUpdate();
+}
+
+function removeAdminOrderItemRow(btn) {
+  const row = btn.closest(".ao-item-row");
+  if (row) row.remove();
+  aoUpdate();
+}
+
+function onAdminItemProductChange(sel) {
+  const row = sel.closest(".ao-item-row");
+  if (!row) return;
+  const opt = sel.options[sel.selectedIndex];
+  const priceEl = row.querySelector(".ao-item-price");
+  if (opt && opt.value && priceEl && !priceEl.value) {
+    priceEl.value = opt.getAttribute("data-base") || "";
+  }
+  aoUpdate();
+}
+
 function openAdminOrderModal() {
   const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
   const rates = window.store.getDeliveryRates();
@@ -3356,26 +3651,15 @@ function openAdminOrderModal() {
           <h3 class="text-sm font-bold text-slate-900">👑 حجز طلبية مباشرة من صاحب المتجر</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
         </div>
-        <p class="text-[11px] text-slate-500 mb-3">الطلبية تُحجز في المخزون وتُرسل لعامل التوصيل، وتنقص الكمية مباشرة بعد تأكيد التسليم.</p>
+        <p class="text-[11px] text-slate-500 mb-3">يمكنك اختيار عدة منتجات في نفس الطلبية. تُحجز الكمية وتُخصم مباشرة بعد تأكيد التسليم.</p>
 
         <form onsubmit="handleAdminSubmitOrder(event)" class="space-y-3 text-xs">
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">المنتج:</label>
-            <select id="ao-product" required onchange="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
-              <option value="">-- اختر المنتج --</option>
-              ${products.map(p => `<option value="${p.id}" data-base="${p.basePrice}">${p.name} (متاح: ${window.store.getAvailableStock(p.id)} | مرجعي: ${p.basePrice} دج)</option>`).join('')}
-            </select>
+          <div id="ao-items-container" class="space-y-2">
+            ${renderAdminOrderItemRowHtml(products, true)}
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">الكمية:</label>
-              <input type="number" id="ao-qty" min="1" value="1" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold" />
-            </div>
-            <div>
-              <label class="block font-bold text-slate-700 mb-1">سعر البيع للزبون:</label>
-              <input type="number" id="ao-price" min="0" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-blue-700" />
-            </div>
-          </div>
+          <button type="button" onclick="addAdminOrderItemRow()" class="w-full py-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/60 hover:bg-blue-50 text-blue-700 font-bold text-xs">
+            ➕ إضافة منتج آخر لنفس الطلبية
+          </button>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block font-bold text-slate-700 mb-1">الولاية:</label>
@@ -3415,40 +3699,55 @@ function openAdminOrderModal() {
 }
 
 function aoUpdate(wilayaChanged = false) {
-  const prodSel = document.getElementById("ao-product");
+  const rows = document.querySelectorAll(".ao-item-row");
   const wilSel = document.getElementById("ao-wilaya");
-  const priceEl = document.getElementById("ao-price");
   const delEl = document.getElementById("ao-delivery");
-  if (!prodSel) return;
-  const pOpt = prodSel.options[prodSel.selectedIndex];
-  const product = window.store.getProductById(prodSel.value);
-  if (product && !priceEl.value) priceEl.value = product.basePrice;
+  if (!wilSel || !delEl) return;
+
   if (wilayaChanged) {
     const wOpt = wilSel.options[wilSel.selectedIndex];
     delEl.value = wOpt && wOpt.value ? wOpt.getAttribute("data-fee") : 0;
   }
-  const qty = parseInt(document.getElementById("ao-qty").value) || 1;
-  const price = parseFloat(priceEl.value) || 0;
+
+  let totalSelling = 0;
+  let totalCost = 0;
+  rows.forEach(row => {
+    const sel = row.querySelector(".ao-item-product");
+    const qty = parseInt(row.querySelector(".ao-item-qty")?.value) || 0;
+    const price = parseFloat(row.querySelector(".ao-item-price")?.value) || 0;
+    const opt = sel?.options[sel.selectedIndex];
+    const cost = opt && opt.value ? (parseFloat(opt.getAttribute("data-cost")) || 0) : 0;
+    if (opt && opt.value && qty > 0) {
+      totalSelling += price * qty;
+      totalCost += cost * qty;
+    }
+  });
+
   const del = parseFloat(delEl.value) || 0;
   const wOpt = wilSel.options[wilSel.selectedIndex];
   const stdFee = wOpt && wOpt.value ? parseFloat(wOpt.getAttribute("data-fee")) : 0;
-  const cost = product ? (product.costPrice || 0) : 0;
-  const profit = (price - cost) * qty - Math.max(0, stdFee - del);
-  document.getElementById("ao-total").innerText = `${(price * qty + del).toLocaleString()} دج`;
+  const profit = (totalSelling - totalCost) - Math.max(0, stdFee - del);
+  document.getElementById("ao-total").innerText = `${(totalSelling + del).toLocaleString()} دج`;
   document.getElementById("ao-profit").innerText = `${profit.toLocaleString()} دج`;
 }
 
 function handleAdminSubmitOrder(e) {
   e.preventDefault();
+  const rows = document.querySelectorAll(".ao-item-row");
+  const items = [];
+  rows.forEach(row => {
+    const productId = row.querySelector(".ao-item-product")?.value;
+    const quantity = row.querySelector(".ao-item-qty")?.value;
+    const sellingPrice = row.querySelector(".ao-item-price")?.value;
+    if (productId) items.push({ productId, quantity, sellingPrice });
+  });
   const wilSel = document.getElementById("ao-wilaya");
   const wOpt = wilSel.options[wilSel.selectedIndex];
   try {
     const order = window.store.createOrder({
       orderSource: "owner",
       repId: "OWNER",
-      productId: document.getElementById("ao-product").value,
-      quantity: document.getElementById("ao-qty").value,
-      sellingPrice: document.getElementById("ao-price").value,
+      items,
       wilaya: wilSel.value,
       commune: document.getElementById("ao-commune").value,
       standardDeliveryFee: wOpt ? wOpt.getAttribute("data-fee") : 0,
