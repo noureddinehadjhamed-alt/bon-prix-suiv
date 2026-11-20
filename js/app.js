@@ -7,6 +7,106 @@ let currentFilterStatus = "all";
 let searchQuery = "";
 let deliverySearchQuery = "";
 let userSearchQuery = "";
+let productSearchQuery = "";
+let productCategoryFilter = "all";
+
+function getProductCategories(products) {
+  const map = new Map();
+  products.forEach(p => {
+    const cat = (p.category || "عام").trim() || "عام";
+    map.set(cat, (map.get(cat) || 0) + 1);
+  });
+  return Array.from(map.entries()); // [[categoryName, count], ...]
+}
+
+function getFilteredProducts(products) {
+  const q = productSearchQuery.trim().toLowerCase();
+  return products.filter(p => {
+    const cat = (p.category || "عام").trim() || "عام";
+    const matchesCat = productCategoryFilter === "all" || cat === productCategoryFilter;
+    const matchesSearch = !q ||
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.id && p.id.toLowerCase().includes(q)) ||
+      cat.toLowerCase().includes(q) ||
+      (p.description && p.description.toLowerCase().includes(q));
+    return matchesCat && matchesSearch;
+  });
+}
+
+function onProductSearchInput(value, inputId) {
+  productSearchQuery = value;
+  renderApp();
+  const el = document.getElementById(inputId);
+  if (el) {
+    el.focus();
+    const len = el.value.length;
+    el.setSelectionRange(len, len);
+  }
+}
+
+function setProductCategoryFilter(cat) {
+  productCategoryFilter = cat;
+  renderApp();
+}
+
+function renderProductFilterBar(products, inputId, accent = "red") {
+  const categories = getProductCategories(products);
+  const filtered = getFilteredProducts(products);
+  const activeBg = accent === "pink" ? "bg-pink-600 text-white shadow-sm" : "bg-red-600 text-white shadow-sm";
+  const focusBorder = accent === "pink" ? "focus:border-pink-600" : "focus:border-red-600";
+
+  return `
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            id="${inputId}"
+            placeholder="🔍 ابحث باسم المنتج، الصنف، الرمز (PRD) أو الوصف..."
+            value="${productSearchQuery.replace(/"/g, '&quot;')}"
+            oninput="onProductSearchInput(this.value, '${inputId}')"
+            class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 pr-9 pl-8 outline-none ${focusBorder} transition-colors"
+          />
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3 top-3"></i>
+          ${productSearchQuery ? `
+            <button type="button" onclick="onProductSearchInput('', '${inputId}')" title="مسح البحث" class="absolute left-2.5 top-2 text-slate-400 hover:text-slate-700 font-bold text-sm px-1">&times;</button>
+          ` : ''}
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <span class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-xl">
+            عرض ${filtered.length} من ${products.length} منتج
+          </span>
+          ${(productSearchQuery || productCategoryFilter !== 'all') ? `
+            <button type="button" onclick="productSearchQuery=''; productCategoryFilter='all'; renderApp();" class="text-[11px] font-bold text-red-600 hover:underline px-1">
+              إعادة ضبط
+            </button>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Category / Type Filter Pills -->
+      <div class="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-100">
+        <span class="text-[11px] font-bold text-slate-500 ml-1">🏷️ التصنيف حسب الصنف:</span>
+        <button
+          type="button"
+          onclick="setProductCategoryFilter('all')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${productCategoryFilter === 'all' ? activeBg : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}"
+        >
+          الكل (${products.length})
+        </button>
+        ${categories.map(([cat, count]) => `
+          <button
+            type="button"
+            onclick="setProductCategoryFilter('${cat.replace(/'/g, "\\'")}')"
+            class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${productCategoryFilter === cat ? activeBg : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}"
+          >
+            ${cat} (${count})
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
 
 // Initialize application
 document.addEventListener("DOMContentLoaded", () => {
@@ -1290,13 +1390,14 @@ function renderAdminDashboard() {
 // 1.3 Admin Products Tab
 function renderAdminProducts() {
   const products = window.store.getProducts();
+  const filteredProducts = getFilteredProducts(products);
 
   return `
     <div class="space-y-5 animate-fade-in">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 class="text-base font-bold text-slate-900">إدارة المخزون، تكلفة الشراء وسعر الجملة</h3>
-          <p class="text-xs text-slate-500">سعر بيعك هو السعر المعتمد للمندوبة (سعر الجملة)، والمندوبة تضيف هامش ربحها فوقه للزبون.</p>
+          <h3 class="text-base font-bold text-slate-900">إدارة المخزون، تكلفة الشراء والسعر المرجعي</h3>
+          <p class="text-xs text-slate-500">السعر المرجعي هو السعر الذي تحدده، والمندوبة تضيف ربحها فوقه. يمكنك البحث وحصر المنتجات حسب الصنف.</p>
         </div>
         <button onclick="openAddProductModal()" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-sm self-start sm:self-auto transition-all">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
@@ -1304,9 +1405,17 @@ function renderAdminProducts() {
         </button>
       </div>
 
+      <!-- Product Search & Category Filter Bar -->
+      ${renderProductFilterBar(products, "admin-product-search", "red")}
+
       <!-- Products Grid -->
+      ${filteredProducts.length === 0 ? `
+        <div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-xs">
+          لا توجد منتجات مطابقة للبحث أو الصنف المختار.
+        </div>
+      ` : `
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        ${products.map(p => {
+        ${filteredProducts.map(p => {
           const cost = p.costPrice || 0;
           const base = p.basePrice || 0;
           const profit = base - cost;
@@ -1407,6 +1516,7 @@ function renderAdminProducts() {
           `;
         }).join('')}
       </div>
+      `}
 
       <!-- Stock Movements Log (linked to delivery confirmation) -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1498,7 +1608,8 @@ function renderAdminDeliveryRates() {
               <tr>
                 <th class="p-3 font-bold">الرمز</th>
                 <th class="p-3 font-bold">اسم الولاية</th>
-                <th class="p-3 font-bold">سعر التوصيل القياسي المعتمد</th>
+                <th class="p-3 font-bold">سعر التوصيل للمكتب 🏢</th>
+                <th class="p-3 font-bold">سعر التوصيل لباب المنزل 🏠</th>
                 <th class="p-3 font-bold">البلديات والمناطق المشمولة</th>
                 <th class="p-3 font-bold text-center">إجراءات</th>
               </tr>
@@ -1506,16 +1617,17 @@ function renderAdminDeliveryRates() {
             <tbody class="divide-y divide-slate-100">
               ${filtered.length === 0 ? `
                 <tr>
-                  <td colspan="5" class="p-8 text-center text-slate-400">لا توجد نتائج مطابقة لبحثك.</td>
+                  <td colspan="6" class="p-8 text-center text-slate-400">لا توجد نتائج مطابقة لبحثك.</td>
                 </tr>
               ` : filtered.map(r => `
                 <tr class="hover:bg-slate-50/70 transition-colors">
                   <td class="p-3 font-mono font-bold text-slate-500">${r.wilayaCode || '-'}</td>
                   <td class="p-3 font-bold text-slate-900">${r.wilayaName}</td>
-                  <td class="p-3 font-extrabold text-blue-700">${r.defaultFee.toLocaleString()} دج</td>
+                  <td class="p-3 font-extrabold text-emerald-700">${(r.deskFee ?? Math.max(150, r.defaultFee - 200)).toLocaleString()} دج</td>
+                  <td class="p-3 font-extrabold text-blue-700">${(r.homeFee ?? r.defaultFee).toLocaleString()} دج</td>
                   <td class="p-3 text-slate-500 max-w-md">${r.communes}</td>
                   <td class="p-3 text-center whitespace-nowrap">
-                    <button onclick="openEditDeliveryRateModal('${r.id}')" title="تعديل السعر" class="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50">
+                    <button onclick="openEditDeliveryRateModal('${r.id}')" title="تعديل الأسعار (المكتب والمنزل)" class="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50">
                       <i data-lucide="edit-3" class="w-4 h-4"></i>
                     </button>
                     <button onclick="confirmDeleteDeliveryRate('${r.id}')" title="حذف" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
@@ -1620,8 +1732,8 @@ function renderAdminOrders() {
                   </td>
                   <td class="p-3 whitespace-nowrap">
                     <div class="text-slate-900 font-black">تحصيل: ${totalCharged.toLocaleString()} دج</div>
-                    <div class="text-[10px] text-slate-500">منها توصيل: ${(o.chargedDeliveryFee || 0).toLocaleString()} دج</div>
-                    ${o.deliverySubsidy > 0 ? `<div class="text-[10px] text-rose-600 font-semibold">(دعم توصيل المندوبة: -${o.deliverySubsidy} دج)</div>` : ''}
+                    <div class="text-[10px] text-slate-500">${o.deliveryType === 'desk' ? '🏢 للمكتب' : '🏠 لباب المنزل'}: ${(o.chargedDeliveryFee || 0).toLocaleString()} دج</div>
+                    ${o.deliverySubsidy > 0 ? `<div class="text-[10px] text-rose-600 font-semibold">(تخفيض توصيل مخصوم من الفائدة: -${o.deliverySubsidy} دج)</div>` : ''}
                   </td>
                   <td class="p-3 whitespace-nowrap">
                     <div class="text-blue-700 font-bold">ربحك: +${(o.ownerProfit || 0).toLocaleString()} دج</div>
@@ -1636,22 +1748,30 @@ function renderAdminOrders() {
                     ` : ''}
                   </td>
                   <td class="p-3 text-center whitespace-nowrap">
-                    <div class="flex items-center justify-center gap-1">
+                    <div class="flex items-center justify-center gap-1 flex-wrap">
                       ${o.driverInquiryOpen ? `
                         <button onclick="openResolveInquiryModal('${o.id}')" title="توضيح استفسار السائق" class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold">
                           حل الاستفسار
                         </button>
                       ` : ''}
+                      <button onclick="openEditOrderModal('${o.id}')" title="تعديل الطلبية (إضافة / حذف / تعديل منتجات وأسعار)" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                      </button>
                       ${o.status === 'out_for_delivery' ? `
-                        <button onclick="adminMarkDelivered('${o.id}')" title="تأكيد التوصيل يدوياً" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
+                        <button onclick="adminMarkDelivered('${o.id}')" title="تأكيد التسليم وخصم المخزون" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg">
                           <i data-lucide="check-circle" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="adminMarkReturned('${o.id}')" title="تأكيد الإرجاع" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
-                          <i data-lucide="x-circle" class="w-4 h-4"></i>
+                      ` : ''}
+                      ${(o.status === 'out_for_delivery' || o.status === 'delivered') ? `
+                        <button onclick="adminMarkReturned('${o.id}')" title="${o.status === 'delivered' ? 'إرجاع الطلبية للمخزون بعد التسليم' : 'إلغاء / إرجاع للمخزون'}" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg">
+                          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                         </button>
                       ` : ''}
                       <button onclick="printOrderReceipt('${o.id}')" title="طباعة وصل" class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg">
                         <i data-lucide="printer" class="w-4 h-4"></i>
+                      </button>
+                      <button onclick="confirmDeleteOrder('${o.id}')" title="حذف الطلبية نهائياً" class="p-1.5 text-red-500 hover:bg-red-50 rounded-lg">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
                       </button>
                     </div>
                   </td>
@@ -2000,16 +2120,24 @@ function renderRepNewOrderForm(rep) {
             تحديد الولاية وسعر التوصيل:
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-[11px] font-bold text-slate-600 mb-1">الولاية:</label>
               <select id="order-wilaya-select" onchange="onOrderWilayaChange()" required class="w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-semibold text-slate-800 outline-none focus:border-pink-500">
                 <option value="">-- اختر ولاية التوصيل --</option>
                 ${deliveryRates.map(r => `
-                  <option value="${r.wilayaName}" data-fee="${r.defaultFee}" data-communes="${r.communes}">
-                    ${r.wilayaCode ? r.wilayaCode + ' - ' : ''}${r.wilayaName} (سعر التوصيل المرجعي: ${r.defaultFee} دج)
+                  <option value="${r.wilayaName}" data-homefee="${r.homeFee ?? r.defaultFee}" data-deskfee="${r.deskFee ?? Math.max(150, r.defaultFee - 200)}" data-communes="${r.communes}">
+                    ${r.wilayaCode ? r.wilayaCode + ' - ' : ''}${r.wilayaName} (مكتب: ${r.deskFee ?? Math.max(150, r.defaultFee - 200)} | منزل: ${r.homeFee ?? r.defaultFee} دج)
                   </option>
                 `).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">نوع التوصيل:</label>
+              <select id="order-delivery-type" onchange="onOrderWilayaChange()" class="w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-blue-700 outline-none focus:border-pink-500">
+                <option value="home">🏠 توصيل لباب المنزل</option>
+                <option value="desk">🏢 توصيل للمكتب (Stop Desk)</option>
               </select>
             </div>
 
@@ -2169,12 +2297,18 @@ function renderRepMyOrders(rep) {
               </div>
             ` : ''}
 
-            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span class="text-slate-400 text-[11px]">${o.address}</span>
-              <a href="https://wa.me/213${o.customerPhone.replace(/^0/, '')}" target="_blank" class="text-emerald-600 font-bold hover:underline flex items-center gap-1">
-                <span>واتساب الزبون</span>
-                <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
-              </a>
+            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-xs">
+              <span class="text-slate-400 text-[11px]">${o.deliveryType === 'desk' ? '🏢 للمكتب' : '🏠 لباب المنزل'} | ${o.address}</span>
+              <div class="flex items-center gap-2">
+                ${(o.status === 'out_for_delivery' || o.status === 'pending') ? `
+                  <button onclick="openEditOrderModal('${o.id}')" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-bold text-[11px]">✏️ تعديل</button>
+                  <button onclick="confirmDeleteOrder('${o.id}')" class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold text-[11px]">🗑️ حذف</button>
+                ` : ''}
+                <a href="https://wa.me/213${o.customerPhone.replace(/^0/, '')}" target="_blank" class="text-emerald-600 font-bold hover:underline flex items-center gap-1">
+                  <span>واتساب الزبون</span>
+                  <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
             </div>
 
           </div>
@@ -2187,16 +2321,25 @@ function renderRepMyOrders(rep) {
 
 function renderRepCatalog(rep) {
   const products = window.store.getProducts();
+  const filteredProducts = getFilteredProducts(products);
 
   return `
     <div class="space-y-4 animate-fade-in">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-slate-900">كتالوج المنتجات والكميات المتوفرة بالمخزون</h3>
-        <span class="text-xs text-slate-500">سعر المتجر هو سعر الجملة المعتمد لكِ وتضيفين ربحكِ فوقه</span>
+        <span class="text-xs text-slate-500">السعر المرجعي هو السعر المعتمد لكِ وتضيفين ربحكِ فوقه</span>
       </div>
 
+      <!-- Product Search & Category Filter Bar -->
+      ${renderProductFilterBar(products, "rep-product-search", "pink")}
+
+      ${filteredProducts.length === 0 ? `
+        <div class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400 text-xs">
+          لا توجد منتجات مطابقة للبحث أو الصنف المختار.
+        </div>
+      ` : `
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        ${products.map(p => `
+        ${filteredProducts.map(p => `
           <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between">
             <div>
               <div class="relative h-40 bg-slate-100">
@@ -2249,6 +2392,7 @@ function renderRepCatalog(rep) {
           </div>
         `).join('')}
       </div>
+      `}
     </div>
   `;
 }
@@ -2702,8 +2846,11 @@ function openAddProductModal() {
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">التصنيف:</label>
-            <input type="text" id="prd-category" placeholder="عطور / تجميل / إكسسوارات..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+            <label class="block font-bold text-slate-700 mb-1">التصنيف / الصنف:</label>
+            <input type="text" id="prd-category" list="product-categories-list" placeholder="اختر صنفاً موجوداً أو اكتب صنفاً جديداً (ستائر / عطور / تجميل...)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600" />
+            <datalist id="product-categories-list">
+              ${getProductCategories(window.store.getProducts()).map(([cat]) => `<option value="${cat}"></option>`).join('')}
+            </datalist>
           </div>
 
           <!-- Product Images Box (Multi-Image Upload from Device + AI Generation) -->
@@ -2907,8 +3054,11 @@ function openEditProductModal(id) {
               <input type="number" id="edit-prd-stock" value="${p.stock}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600 font-bold" />
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">التصنيف:</label>
-              <input type="text" id="edit-prd-cat" value="${p.category}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none" />
+              <label class="block font-bold text-slate-700 mb-1">التصنيف / الصنف:</label>
+              <input type="text" id="edit-prd-cat" list="edit-product-categories-list" value="${p.category}" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none" />
+              <datalist id="edit-product-categories-list">
+                ${getProductCategories(window.store.getProducts()).map(([cat]) => `<option value="${cat}"></option>`).join('')}
+              </datalist>
             </div>
           </div>
 
@@ -3114,9 +3264,15 @@ function openAddDeliveryRateModal() {
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">سعر التوصيل المرجعي (المعتمد للموزع):</label>
-            <input type="number" id="del-fee" required placeholder="مثلاً: 250" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-blue-700 text-sm focus:border-red-600" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للمكتب 🏢 (دج):</label>
+              <input type="number" id="del-desk-fee" required placeholder="مثلاً: 250" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-emerald-700 text-sm focus:border-red-600" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل لباب المنزل 🏠 (دج):</label>
+              <input type="number" id="del-fee" required placeholder="مثلاً: 450" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-blue-700 text-sm focus:border-red-600" />
+            </div>
           </div>
 
           <div>
@@ -3126,7 +3282,7 @@ function openAddDeliveryRateModal() {
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
-            <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-md">حفظ سعر التوصيل</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-md">حفظ أسعار التوصيل</button>
           </div>
         </form>
       </div>
@@ -3138,12 +3294,13 @@ function handleSaveDeliveryRate(e) {
   e.preventDefault();
   const wilayaCode = document.getElementById("del-code").value;
   const wilayaName = document.getElementById("del-name").value;
-  const defaultFee = document.getElementById("del-fee").value;
+  const homeFee = document.getElementById("del-fee").value;
+  const deskFee = document.getElementById("del-desk-fee").value;
   const communes = document.getElementById("del-communes").value;
 
-  window.store.addDeliveryRate({ wilayaCode, wilayaName, defaultFee, communes });
+  window.store.addDeliveryRate({ wilayaCode, wilayaName, defaultFee: homeFee, homeFee, deskFee, communes });
   closeModal();
-  showToast("تمت إضافة سعر التوصيل المرجعي للولاية بنجاح 🚚");
+  showToast("تمت إضافة أسعار التوصيل (للمكتب ولباب المنزل) بنجاح 🚚");
 }
 
 function openEditDeliveryRateModal(id) {
@@ -3155,7 +3312,7 @@ function openEditDeliveryRateModal(id) {
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-fade-in">
         <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-          <h3 class="text-sm font-bold text-slate-900">تعديل سعر التوصيل لـ ${rate.wilayaName}</h3>
+          <h3 class="text-sm font-bold text-slate-900">تعديل أسعار التوصيل لـ ${rate.wilayaName}</h3>
           <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
         </div>
 
@@ -3171,9 +3328,15 @@ function openEditDeliveryRateModal(id) {
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-slate-700 mb-1">سعر التوصيل المرجعي (دج):</label>
-            <input type="number" id="edit-del-fee" value="${rate.defaultFee}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-blue-700 text-sm" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للمكتب 🏢 (دج):</label>
+              <input type="number" id="edit-del-desk-fee" value="${rate.deskFee ?? Math.max(150, rate.defaultFee - 200)}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-emerald-700 text-sm" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل لباب المنزل 🏠 (دج):</label>
+              <input type="number" id="edit-del-fee" value="${rate.homeFee ?? rate.defaultFee}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-blue-700 text-sm" />
+            </div>
           </div>
 
           <div>
@@ -3195,12 +3358,13 @@ function handleUpdateDeliveryRate(e, id) {
   e.preventDefault();
   const wilayaCode = document.getElementById("edit-del-code").value;
   const wilayaName = document.getElementById("edit-del-name").value;
-  const defaultFee = document.getElementById("edit-del-fee").value;
+  const homeFee = document.getElementById("edit-del-fee").value;
+  const deskFee = document.getElementById("edit-del-desk-fee").value;
   const communes = document.getElementById("edit-del-communes").value;
 
-  window.store.updateDeliveryRate(id, { wilayaCode, wilayaName, defaultFee, communes });
+  window.store.updateDeliveryRate(id, { wilayaCode, wilayaName, defaultFee: homeFee, homeFee, deskFee, communes });
   closeModal();
-  showToast("تم تحديث سعر التوصيل المرجعي بنجاح ✓");
+  showToast("تم تحديث أسعار التوصيل (للمكتب ولباب المنزل) بنجاح ✓");
 }
 
 function confirmDeleteDeliveryRate(id) {
@@ -3210,20 +3374,23 @@ function confirmDeleteDeliveryRate(id) {
   }
 }
 
-// Rep Order Handlers with Delivery Subsidy
+// Rep Order Handlers with Delivery Type (Home/Desk) & Subsidy
 function onOrderWilayaChange() {
   const select = document.getElementById("order-wilaya-select");
+  const typeSelect = document.getElementById("order-delivery-type");
   const standardInput = document.getElementById("order-standard-delivery");
   const chargedInput = document.getElementById("order-charged-delivery");
 
   if (!select || !standardInput || !chargedInput) return;
 
   const opt = select.options[select.selectedIndex];
+  const delType = typeSelect ? typeSelect.value : "home";
   if (!opt || !opt.value) {
     standardInput.value = 0;
     chargedInput.value = 0;
   } else {
-    const fee = parseFloat(opt.getAttribute("data-fee")) || 500;
+    const attrName = delType === "desk" ? "data-deskfee" : "data-homefee";
+    const fee = parseFloat(opt.getAttribute(attrName)) || parseFloat(opt.getAttribute("data-homefee")) || 500;
     standardInput.value = fee;
     chargedInput.value = fee;
     chargedInput.max = fee;
@@ -3311,6 +3478,8 @@ function handleRepSubmitOrder(e, repId) {
 
   const wilayaSelect = document.getElementById("order-wilaya-select");
   const wilaya = wilayaSelect ? wilayaSelect.value : "";
+  const deliveryTypeEl = document.getElementById("order-delivery-type");
+  const deliveryType = deliveryTypeEl ? deliveryTypeEl.value : "home";
   const commune = document.getElementById("order-commune").value;
   const standardDeliveryFee = document.getElementById("order-standard-delivery").value;
   const chargedDeliveryFee = document.getElementById("order-charged-delivery").value;
@@ -3324,6 +3493,7 @@ function handleRepSubmitOrder(e, repId) {
       repId,
       items,
       wilaya,
+      deliveryType,
       commune,
       standardDeliveryFee,
       chargedDeliveryFee,
@@ -3584,9 +3754,251 @@ function adminMarkDelivered(orderId) {
 }
 
 function adminMarkReturned(orderId) {
-  if (confirm("هل تريد تأكيد إرجاع/إلغاء هذه الطلبية؟")) {
-    window.store.markOrderReturned(orderId, "إرجاع يدوي من صاحب المتجر");
-    showToast("تم تسجيل الإرجاع وتحرير المخزون.");
+  const o = window.store.getOrderById(orderId);
+  if (!o) return;
+  const msg = o.status === "delivered"
+    ? `هذه الطلبية (#${o.id}) تم تأكيد تسليمها سابقاً.\nهل أرجعها الزبون وتريد إعادتها للمخزون وإلغاء أرباحها؟`
+    : `هل تريد تأكيد إرجاع/إلغاء الطلبية #${o.id} وتحرير الكمية المحجوزة؟`;
+  if (confirm(msg)) {
+    window.store.markOrderReturned(orderId, o.status === "delivered" ? "إرجاع الطلبية للمخزون بعد التسليم (طلب الزبون)" : "إرجاع يدوي من صاحب المتجر");
+    showToast("تم إرجاع الطلبية وإعادة الكمية إلى المخزون بنجاح ↩️");
+  }
+}
+
+function confirmDeleteOrder(orderId) {
+  const o = window.store.getOrderById(orderId);
+  if (!o) return;
+  const extra = o.stockDeducted ? "\n(سيتم إرجاع كمية المنتجات إلى المخزون تلقائياً قبل الحذف)" : "";
+  if (confirm(`هل أنت متأكد من حذف الطلبية #${o.id} للزبون (${o.customerName}) نهائياً؟${extra}`)) {
+    const user = window.store.getCurrentUser();
+    window.store.deleteOrder(orderId, user ? user.name : "صاحب المتجر");
+    showToast("تم حذف الطلبية من القائمة بنجاح 🗑️");
+  }
+}
+
+// ==========================================
+// EDIT ORDER MODAL (تعديل / إضافة / حذف منتجات وأسعار في طلبات المندوبات وصاحب المتجر)
+// ==========================================
+function renderEditOrderItemRowHtml(products, item = null, isFirst = false) {
+  const selProdId = item ? item.productId : "";
+  const qty = item ? item.quantity : 1;
+  const price = item ? item.sellingPrice : "";
+  return `
+    <div class="eo-item-row p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-700">المنتج:</span>
+        ${!isFirst ? `<button type="button" onclick="removeEditOrderItemRow(this)" class="text-[11px] font-bold text-red-600 hover:bg-red-50 px-1.5 py-0.5 rounded">✕ حذف</button>` : ''}
+      </div>
+      <select required onchange="onEditOrderItemProductChange(this)" class="eo-item-product w-full bg-white border border-slate-200 rounded-xl p-2 font-semibold">
+        <option value="">-- اختر المنتج --</option>
+        ${products.map(p => `<option value="${p.id}" data-base="${p.basePrice}" data-cost="${p.costPrice || 0}" ${p.id === selProdId ? 'selected' : ''}>${p.name} (المخزون: ${p.stock} | مرجعي: ${p.basePrice} دج)</option>`).join('')}
+      </select>
+      <div class="grid grid-cols-2 gap-2">
+        <input type="number" min="1" value="${qty}" required oninput="eoUpdate()" placeholder="الكمية" class="eo-item-qty w-full bg-white border border-slate-200 rounded-xl p-2 font-bold" />
+        <input type="number" min="0" value="${price}" required oninput="eoUpdate()" placeholder="سعر البيع للقطعة" class="eo-item-price w-full bg-white border border-slate-200 rounded-xl p-2 font-bold text-blue-700" />
+      </div>
+    </div>
+  `;
+}
+
+function addEditOrderItemRow() {
+  const container = document.getElementById("eo-items-container");
+  if (!container) return;
+  const products = window.store.getProducts();
+  const wrap = document.createElement("div");
+  wrap.innerHTML = renderEditOrderItemRowHtml(products, null, false).trim();
+  container.appendChild(wrap.firstElementChild);
+  eoUpdate();
+}
+
+function removeEditOrderItemRow(btn) {
+  const row = btn.closest(".eo-item-row");
+  if (row) row.remove();
+  eoUpdate();
+}
+
+function onEditOrderItemProductChange(sel) {
+  const row = sel.closest(".eo-item-row");
+  if (!row) return;
+  const opt = sel.options[sel.selectedIndex];
+  const priceEl = row.querySelector(".eo-item-price");
+  if (opt && opt.value && priceEl && !priceEl.value) {
+    priceEl.value = opt.getAttribute("data-base") || "";
+  }
+  eoUpdate();
+}
+
+function openEditOrderModal(orderId) {
+  const o = window.store.getOrderById(orderId);
+  if (!o) return;
+  const products = window.store.getProducts();
+  const rates = window.store.getDeliveryRates();
+  const isOwnerOrder = o.orderSource === "owner" || o.repId === "OWNER";
+  const orderItems = (Array.isArray(o.items) && o.items.length > 0)
+    ? o.items
+    : [{ productId: o.productId, quantity: o.quantity || 1, sellingPrice: o.sellingPrice || o.basePrice }];
+
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl animate-fade-in max-h-[92vh] overflow-y-auto">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+          <h3 class="text-sm font-bold text-slate-900">✏️ تعديل الطلبية #${o.id} (${isOwnerOrder ? '👑 صاحب المتجر' : '🌸 ' + o.repName})</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+
+        <form onsubmit="handleEditOrderSubmit(event, '${o.id}')" data-isowner="${isOwnerOrder ? '1' : '0'}" id="eo-form" class="space-y-3 text-xs">
+          <div id="eo-items-container" class="space-y-2">
+            ${orderItems.map((it, idx) => renderEditOrderItemRowHtml(products, it, idx === 0)).join('')}
+          </div>
+          <button type="button" onclick="addEditOrderItemRow()" class="w-full py-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/60 hover:bg-blue-50 text-blue-700 font-bold text-xs">
+            ➕ إضافة منتج آخر لهذه الطلبية
+          </button>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">الولاية:</label>
+              <select id="eo-wilaya" required onchange="eoUpdate(true)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
+                <option value="">-- اختر --</option>
+                ${rates.map(r => `<option value="${r.wilayaName}" data-homefee="${r.homeFee ?? r.defaultFee}" data-deskfee="${r.deskFee ?? Math.max(150, r.defaultFee - 200)}" ${r.wilayaName === o.wilaya ? 'selected' : ''}>${r.wilayaName} (مكتب: ${r.deskFee ?? Math.max(150, r.defaultFee - 200)} | منزل: ${r.homeFee ?? r.defaultFee})</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">نوع التوصيل:</label>
+              <select id="eo-delivery-type" onchange="eoUpdate(true)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-blue-700">
+                <option value="home" ${o.deliveryType !== 'desk' ? 'selected' : ''}>🏠 لباب المنزل</option>
+                <option value="desk" ${o.deliveryType === 'desk' ? 'selected' : ''}>🏢 للمكتب (Stop Desk)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">السعر المرجعي للتوصيل:</label>
+              <input type="number" id="eo-std-delivery" readonly value="${o.standardDeliveryFee || 0}" class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-600" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للزبون:</label>
+              <input type="number" id="eo-delivery" min="0" value="${o.chargedDeliveryFee || 0}" required oninput="eoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-extrabold text-blue-700" />
+            </div>
+          </div>
+
+          <div id="eo-subsidy-alert" class="hidden text-[11px] p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold">
+            💡 سعر التوصيل أقل من المرجعي بـ <strong id="eo-subsidy-text" class="text-red-600">0</strong> دج — يُخصم الفارق تلقائياً من الفائدة!
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="eo-name" value="${o.customerName || ''}" required placeholder="اسم الزبون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <input type="tel" id="eo-phone" value="${o.customerPhone || ''}" required placeholder="هاتف الزبون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="eo-commune" value="${o.commune || ''}" required placeholder="البلدية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <input type="text" id="eo-address" value="${o.address || ''}" required placeholder="العنوان التفصيلي" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+          </div>
+
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-xl flex justify-between font-bold">
+            <span>إجمالي التحصيل: <span id="eo-total" class="text-blue-700">0 دج</span></span>
+            <span>${isOwnerOrder ? 'ربح صاحب المتجر' : 'صافي ربح المندوبة'}: <span id="eo-profit" class="text-emerald-700">0 دج</span></span>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إلغاء</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">حفظ التعديلات ✓</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  eoUpdate(false);
+}
+
+function eoUpdate(wilayaChanged = false) {
+  const form = document.getElementById("eo-form");
+  const isOwnerOrder = form && form.getAttribute("data-isowner") === "1";
+  const rows = document.querySelectorAll(".eo-item-row");
+  const wilSel = document.getElementById("eo-wilaya");
+  const typeSel = document.getElementById("eo-delivery-type");
+  const stdDelEl = document.getElementById("eo-std-delivery");
+  const delEl = document.getElementById("eo-delivery");
+  if (!wilSel || !delEl) return;
+
+  const wOpt = wilSel.options[wilSel.selectedIndex];
+  const delType = typeSel ? typeSel.value : "home";
+  const attr = delType === "desk" ? "data-deskfee" : "data-homefee";
+  const computedStdFee = wOpt && wOpt.value ? (parseFloat(wOpt.getAttribute(attr)) || 0) : (parseFloat(stdDelEl?.value) || 0);
+
+  if (wilayaChanged) {
+    if (stdDelEl) stdDelEl.value = computedStdFee;
+    delEl.value = computedStdFee;
+  }
+
+  const stdFee = parseFloat(stdDelEl?.value) || computedStdFee;
+  let totalSelling = 0;
+  let totalBase = 0;
+  let totalCost = 0;
+  rows.forEach(row => {
+    const sel = row.querySelector(".eo-item-product");
+    const qty = parseInt(row.querySelector(".eo-item-qty")?.value) || 0;
+    const price = parseFloat(row.querySelector(".eo-item-price")?.value) || 0;
+    const opt = sel?.options[sel.selectedIndex];
+    const base = opt && opt.value ? (parseFloat(opt.getAttribute("data-base")) || 0) : 0;
+    const cost = opt && opt.value ? (parseFloat(opt.getAttribute("data-cost")) || 0) : 0;
+    if (opt && opt.value && qty > 0) {
+      totalSelling += price * qty;
+      totalBase += base * qty;
+      totalCost += cost * qty;
+    }
+  });
+
+  const del = parseFloat(delEl.value) || 0;
+  const subsidy = Math.max(0, stdFee - del);
+  const netProfit = isOwnerOrder ? ((totalSelling - totalCost) - subsidy) : Math.max(0, (totalSelling - totalBase) - subsidy);
+
+  const totalEl = document.getElementById("eo-total");
+  const profitEl = document.getElementById("eo-profit");
+  if (totalEl) totalEl.innerText = `${(totalSelling + del).toLocaleString()} دج`;
+  if (profitEl) profitEl.innerText = `${netProfit.toLocaleString()} دج`;
+
+  const subAlert = document.getElementById("eo-subsidy-alert");
+  const subText = document.getElementById("eo-subsidy-text");
+  if (subAlert && subText) {
+    if (subsidy > 0) {
+      subAlert.classList.remove("hidden");
+      subText.innerText = subsidy.toLocaleString();
+    } else {
+      subAlert.classList.add("hidden");
+    }
+  }
+}
+
+function handleEditOrderSubmit(e, orderId) {
+  e.preventDefault();
+  const rows = document.querySelectorAll(".eo-item-row");
+  const items = [];
+  rows.forEach(row => {
+    const productId = row.querySelector(".eo-item-product")?.value;
+    const quantity = row.querySelector(".eo-item-qty")?.value;
+    const sellingPrice = row.querySelector(".eo-item-price")?.value;
+    if (productId) items.push({ productId, quantity, sellingPrice });
+  });
+  const user = window.store.getCurrentUser();
+  try {
+    window.store.updateOrder(orderId, {
+      items,
+      wilaya: document.getElementById("eo-wilaya").value,
+      deliveryType: document.getElementById("eo-delivery-type").value,
+      standardDeliveryFee: document.getElementById("eo-std-delivery").value,
+      chargedDeliveryFee: document.getElementById("eo-delivery").value,
+      customerName: document.getElementById("eo-name").value,
+      customerPhone: document.getElementById("eo-phone").value,
+      commune: document.getElementById("eo-commune").value,
+      address: document.getElementById("eo-address").value,
+      actor: user ? user.name : "صاحب المتجر"
+    });
+    closeModal();
+    showToast(`تم تعديل الطلبية #${orderId} وحفظ التحديثات بنجاح ✓`);
+  } catch (err) {
+    alert(err.message);
   }
 }
 
@@ -3665,13 +4077,29 @@ function openAdminOrderModal() {
               <label class="block font-bold text-slate-700 mb-1">الولاية:</label>
               <select id="ao-wilaya" required onchange="aoUpdate(true)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold">
                 <option value="">-- اختر --</option>
-                ${rates.map(r => `<option value="${r.wilayaName}" data-fee="${r.defaultFee}">${r.wilayaName} (${r.defaultFee} دج)</option>`).join('')}
+                ${rates.map(r => `<option value="${r.wilayaName}" data-homefee="${r.homeFee ?? r.defaultFee}" data-deskfee="${r.deskFee ?? Math.max(150, r.defaultFee - 200)}">${r.wilayaName} (مكتب: ${r.deskFee ?? Math.max(150, r.defaultFee - 200)} | منزل: ${r.homeFee ?? r.defaultFee} دج)</option>`).join('')}
               </select>
             </div>
             <div>
-              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للزبون:</label>
-              <input type="number" id="ao-delivery" min="0" value="0" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold" />
+              <label class="block font-bold text-slate-700 mb-1">نوع التوصيل:</label>
+              <select id="ao-delivery-type" onchange="aoUpdate(true)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-blue-700">
+                <option value="home">🏠 لباب المنزل</option>
+                <option value="desk">🏢 للمكتب (Stop Desk)</option>
+              </select>
             </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-600 mb-1">السعر المرجعي للتوصيل:</label>
+              <input type="number" id="ao-std-delivery" readonly value="0" class="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-600" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر التوصيل للزبون (قابل للتعديل):</label>
+              <input type="number" id="ao-delivery" min="0" value="0" required oninput="aoUpdate()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-extrabold text-blue-700" />
+            </div>
+          </div>
+          <div id="ao-subsidy-alert" class="hidden text-[11px] p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold">
+            💡 سعر التوصيل أقل من المرجعي بـ <strong id="ao-subsidy-text" class="text-red-600">0</strong> دج — يُخصم الفارق تلقائياً من فائدتك!
           </div>
           <div class="grid grid-cols-2 gap-2">
             <input type="text" id="ao-commune" required placeholder="البلدية" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
@@ -3701,12 +4129,19 @@ function openAdminOrderModal() {
 function aoUpdate(wilayaChanged = false) {
   const rows = document.querySelectorAll(".ao-item-row");
   const wilSel = document.getElementById("ao-wilaya");
+  const typeSel = document.getElementById("ao-delivery-type");
+  const stdDelEl = document.getElementById("ao-std-delivery");
   const delEl = document.getElementById("ao-delivery");
   if (!wilSel || !delEl) return;
 
+  const wOpt = wilSel.options[wilSel.selectedIndex];
+  const delType = typeSel ? typeSel.value : "home";
+  const attr = delType === "desk" ? "data-deskfee" : "data-homefee";
+  const stdFee = wOpt && wOpt.value ? (parseFloat(wOpt.getAttribute(attr)) || 0) : 0;
+
+  if (stdDelEl) stdDelEl.value = stdFee;
   if (wilayaChanged) {
-    const wOpt = wilSel.options[wilSel.selectedIndex];
-    delEl.value = wOpt && wOpt.value ? wOpt.getAttribute("data-fee") : 0;
+    delEl.value = stdFee;
   }
 
   let totalSelling = 0;
@@ -3724,11 +4159,21 @@ function aoUpdate(wilayaChanged = false) {
   });
 
   const del = parseFloat(delEl.value) || 0;
-  const wOpt = wilSel.options[wilSel.selectedIndex];
-  const stdFee = wOpt && wOpt.value ? parseFloat(wOpt.getAttribute("data-fee")) : 0;
-  const profit = (totalSelling - totalCost) - Math.max(0, stdFee - del);
+  const subsidy = Math.max(0, stdFee - del);
+  const profit = (totalSelling - totalCost) - subsidy;
   document.getElementById("ao-total").innerText = `${(totalSelling + del).toLocaleString()} دج`;
   document.getElementById("ao-profit").innerText = `${profit.toLocaleString()} دج`;
+
+  const subAlert = document.getElementById("ao-subsidy-alert");
+  const subText = document.getElementById("ao-subsidy-text");
+  if (subAlert && subText) {
+    if (subsidy > 0) {
+      subAlert.classList.remove("hidden");
+      subText.innerText = subsidy.toLocaleString();
+    } else {
+      subAlert.classList.add("hidden");
+    }
+  }
 }
 
 function handleAdminSubmitOrder(e) {
@@ -3742,15 +4187,17 @@ function handleAdminSubmitOrder(e) {
     if (productId) items.push({ productId, quantity, sellingPrice });
   });
   const wilSel = document.getElementById("ao-wilaya");
-  const wOpt = wilSel.options[wilSel.selectedIndex];
+  const typeSel = document.getElementById("ao-delivery-type");
+  const stdDelEl = document.getElementById("ao-std-delivery");
   try {
     const order = window.store.createOrder({
       orderSource: "owner",
       repId: "OWNER",
       items,
       wilaya: wilSel.value,
+      deliveryType: typeSel ? typeSel.value : "home",
       commune: document.getElementById("ao-commune").value,
-      standardDeliveryFee: wOpt ? wOpt.getAttribute("data-fee") : 0,
+      standardDeliveryFee: stdDelEl ? stdDelEl.value : 0,
       chargedDeliveryFee: document.getElementById("ao-delivery").value,
       customerName: document.getElementById("ao-name").value,
       customerPhone: document.getElementById("ao-phone").value,

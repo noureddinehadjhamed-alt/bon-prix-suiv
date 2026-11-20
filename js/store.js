@@ -742,11 +742,16 @@ class Store {
     this.saveState();
   }
 
-  // --- Delivery Rates Logic (Set by Store Owner) ---
+  // --- Delivery Rates Logic (Set by Store Owner: Home & Desk/Office) ---
   getDeliveryRates() {
     if (!this.state.deliveryRates) {
       this.state.deliveryRates = JSON.parse(JSON.stringify(DEFAULT_DATA.deliveryRates));
     }
+    this.state.deliveryRates.forEach(r => {
+      if (r.homeFee === undefined) r.homeFee = parseFloat(r.defaultFee) || 500;
+      if (r.deskFee === undefined) r.deskFee = Math.max(150, r.homeFee - 200);
+      if (r.defaultFee === undefined) r.defaultFee = r.homeFee;
+    });
     return this.state.deliveryRates;
   }
 
@@ -760,11 +765,15 @@ class Store {
 
   addDeliveryRate(rate) {
     const id = "DEL-" + String(this.getDeliveryRates().length + 1).padStart(2, "0");
+    const homeFee = parseFloat(rate.homeFee !== undefined ? rate.homeFee : rate.defaultFee) || 500;
+    const deskFee = rate.deskFee !== undefined && rate.deskFee !== "" ? parseFloat(rate.deskFee) : Math.max(150, homeFee - 200);
     const newRate = {
       id,
       wilayaCode: rate.wilayaCode || "",
       wilayaName: rate.wilayaName,
-      defaultFee: parseFloat(rate.defaultFee) || 500,
+      defaultFee: homeFee,
+      homeFee,
+      deskFee,
       communes: rate.communes || "كافة بلديات الولاية"
     };
     this.state.deliveryRates.push(newRate);
@@ -775,10 +784,16 @@ class Store {
   updateDeliveryRate(id, updates) {
     const rate = this.getDeliveryRates().find(r => r.id === id);
     if (!rate) return false;
+    const homeFee = updates.homeFee !== undefined
+      ? parseFloat(updates.homeFee)
+      : (updates.defaultFee !== undefined ? parseFloat(updates.defaultFee) : rate.homeFee);
+    const deskFee = updates.deskFee !== undefined ? parseFloat(updates.deskFee) : rate.deskFee;
     Object.assign(rate, {
       wilayaCode: updates.wilayaCode ?? rate.wilayaCode,
       wilayaName: updates.wilayaName ?? rate.wilayaName,
-      defaultFee: updates.defaultFee !== undefined ? parseFloat(updates.defaultFee) : rate.defaultFee,
+      defaultFee: homeFee,
+      homeFee,
+      deskFee,
       communes: updates.communes ?? rate.communes
     });
     this.saveState();
@@ -1004,6 +1019,7 @@ class Store {
       totalCost,
       totalBase,
       totalProductSelling,
+      deliveryType: data.deliveryType === "desk" ? "desk" : "home", // 'home' لباب المنزل أو 'desk' للمكتب
       standardDeliveryFee,
       chargedDeliveryFee,
       deliverySubsidy,
@@ -1022,6 +1038,185 @@ class Store {
     this.state.orders.unshift(newOrder);
     this.saveState();
     return newOrder;
+  }
+
+  // Update an existing order (edit/add/remove items, prices, delivery type/fee, customer details)
+  updateOrder(orderId, data) {
+    const order = this.getOrderById(orderId);
+    if (!order) throw new Error("الطلبية غير موجودة!");
+
+    const isOwnerOrder = order.orderSource === "owner" || order.repId === "OWNER";
+    const rawItems = Array.isArray(data.items) && data.items.length > 0
+      ? data.items
+      : (Array.isArray(order.items) && order.items.length > 0 ? order.items : [{ productId: order.productId, quantity: order.quantity, sellingPrice: order.sellingPrice }]);
+
+    if (rawItems.length === 0) {
+      throw new Error("يجب أن تحتوي الطلبية على منتج واحد على الأقل!");
+    }
+
+    // Track previous quantities of this order for stock validation
+    const prevItems = (Array.isArray(order.items) && order.items.length > 0)
+      ? order.items
+      : [{ productId: order.productId, quantity: order.quantity || 1 }];
+    const prevQtyByProduct = {};
+    prevItems.forEach(it => {
+      prevQtyByProduct[it.productId] = (prevQtyByProduct[it.productId] || 0) + (parseInt(it.quantity) || 0);
+    });
+
+    const newQtyByProduct = {};
+    const resolvedItems = [];
+    for (const raw of rawItems) {
+      const product = this.getProductById(raw.productId);
+      if (!product) throw new Error("أحد المنتجات المختارة غير موجود!");
+      const quantity = parseInt(raw.quantity) || 1;
+      if (quantity < 1) throw new Error(`الكمية للمنتج "${product.name}" يجب أن تكون 1 على الأقل!`);
+      newQtyByProduct[product.id] = (newQtyByProduct[product.id] || 0) + quantity;
+
+      const sellingPrice = parseFloat(raw.sellingPrice) || product.basePrice;
+      if (!isOwnerOrder && sellingPrice < product.basePrice) {
+        throw new Error(`سعر البيع للمنتج "${product.name}" (${sellingPrice} دج) أقل من السعر المرجعي (${product.basePrice} دج)!`);
+      }
+
+      resolvedItems.push({
+        productId: product.id,
+        productName: product.name,
+        quantity,
+        costPrice: product.costPrice || 0,
+        basePrice: product.basePrice,
+        sellingPrice
+      });
+    }
+
+    // Validate stock availability (excluding this order's own previous reservation/deduction)
+    for (const [prodId, reqQty] of Object.entries(newQtyByProduct)) {
+      const product = this.getProductById(prodId);
+      const ownPrev = prevQtyByProduct[prodId] || 0;
+      const effectiveStock = order.stockDeducted ? (product.stock + ownPrev) : product.stock;
+      const otherReserved = Math.max(0, this.getReservedStock(prodId) - (!order.stockDeducted ? ownPrev : 0));
+      const available = Math.max(0, effectiveStock - otherReserved);
+      if (reqQty > available) {
+        throw new Error(`الكمية المطلوبة من "${product.name}" (${reqQty}) تتجاوز المتاح (${available})!`);
+      }
+    }
+
+    const standardDeliveryFee = parseFloat(data.standardDeliveryFee !== undefined ? data.standardDeliveryFee : order.standardDeliveryFee) || 0;
+    const chargedDeliveryFee = data.chargedDeliveryFee !== undefined && data.chargedDeliveryFee !== ""
+      ? parseFloat(data.chargedDeliveryFee)
+      : standardDeliveryFee;
+
+    if (chargedDeliveryFee < 0) throw new Error("سعر التوصيل لا يمكن أن يكون سالباً!");
+    if (!isOwnerOrder && chargedDeliveryFee > standardDeliveryFee) {
+      throw new Error(`سعر التوصيل الرسمي (${standardDeliveryFee} دج). يمكنكِ تخفيضه فقط بشرط خصم الفارق من ربحكِ.`);
+    }
+
+    const deliverySubsidy = Math.max(0, standardDeliveryFee - chargedDeliveryFee);
+    const totalQuantity = resolvedItems.reduce((s, it) => s + it.quantity, 0);
+    const totalCost = resolvedItems.reduce((s, it) => s + (it.costPrice * it.quantity), 0);
+    const totalBase = resolvedItems.reduce((s, it) => s + (it.basePrice * it.quantity), 0);
+    const totalProductSelling = resolvedItems.reduce((s, it) => s + (it.sellingPrice * it.quantity), 0);
+    const grossRepProfit = isOwnerOrder ? 0 : (totalProductSelling - totalBase);
+
+    if (!isOwnerOrder && deliverySubsidy > grossRepProfit) {
+      throw new Error(`فارق تخفيض التوصيل (${deliverySubsidy} دج) يتجاوز إجمالي ربح المندوبة (${grossRepProfit} دج)!`);
+    }
+
+    // If stock was already deducted, adjust difference in actual inventory
+    if (order.stockDeducted) {
+      prevItems.forEach(it => {
+        const p = this.getProductById(it.productId);
+        if (p) p.stock += (parseInt(it.quantity) || 0);
+      });
+      resolvedItems.forEach(it => {
+        const p = this.getProductById(it.productId);
+        if (p) p.stock = Math.max(0, p.stock - it.quantity);
+      });
+    }
+
+    const repProfit = isOwnerOrder ? 0 : (grossRepProfit - deliverySubsidy);
+    const totalCustomerAmount = totalProductSelling + chargedDeliveryFee;
+    const ownerProfit = isOwnerOrder
+      ? ((totalProductSelling - totalCost) - deliverySubsidy)
+      : (totalBase - totalCost);
+
+    const summaryProductName = resolvedItems.length === 1
+      ? resolvedItems[0].productName
+      : resolvedItems.map(it => `${it.productName} (x${it.quantity})`).join(" + ");
+
+    Object.assign(order, {
+      customerName: data.customerName ?? order.customerName,
+      customerPhone: data.customerPhone ?? order.customerPhone,
+      wilaya: data.wilaya ?? order.wilaya,
+      commune: data.commune ?? order.commune,
+      address: data.address ?? order.address,
+      deliveryType: data.deliveryType === "desk" ? "desk" : (data.deliveryType === "home" ? "home" : (order.deliveryType || "home")),
+      items: resolvedItems,
+      productId: resolvedItems[0].productId,
+      productName: summaryProductName,
+      quantity: totalQuantity,
+      costPrice: resolvedItems.length === 1 ? resolvedItems[0].costPrice : Math.round(totalCost / totalQuantity),
+      basePrice: resolvedItems.length === 1 ? resolvedItems[0].basePrice : Math.round(totalBase / totalQuantity),
+      sellingPrice: resolvedItems.length === 1 ? resolvedItems[0].sellingPrice : Math.round(totalProductSelling / totalQuantity),
+      totalCost,
+      totalBase,
+      totalProductSelling,
+      standardDeliveryFee,
+      chargedDeliveryFee,
+      deliverySubsidy,
+      totalCustomerAmount,
+      grossRepProfit,
+      repProfit,
+      ownerProfit,
+      driverNotes: data.driverNotes !== undefined ? data.driverNotes : order.driverNotes
+    });
+
+    this.addSecurityLog(
+      `تعديل الطلبية #${order.id}`,
+      data.actor || "صاحب المتجر / المندوبة",
+      "info",
+      `تم تحديث تفاصيل الطلبية (${resolvedItems.length} منتج | التحصيل: ${totalCustomerAmount} دج)`
+    );
+    this.saveState();
+    return order;
+  }
+
+  // Delete an order permanently (and restore stock if it had already been deducted)
+  deleteOrder(orderId, actor = "صاحب المتجر") {
+    const order = this.getOrderById(orderId);
+    if (!order) return false;
+
+    if (order.stockDeducted) {
+      const orderItems = (Array.isArray(order.items) && order.items.length > 0)
+        ? order.items
+        : [{ productId: order.productId, productName: order.productName, quantity: order.quantity || 1 }];
+
+      if (!this.state.stockMovements) this.state.stockMovements = [];
+      orderItems.forEach(it => {
+        const product = this.getProductById(it.productId);
+        if (!product) return;
+        const before = product.stock;
+        const qty = parseInt(it.quantity) || 1;
+        product.stock += qty;
+        this.state.stockMovements.unshift({
+          id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
+          date: new Date().toISOString().replace("T", " ").slice(0, 16),
+          orderId: order.id,
+          orderSource: order.orderSource || "rep",
+          productId: product.id,
+          productName: product.name,
+          quantity: qty,
+          stockBefore: before,
+          stockAfter: product.stock,
+          type: "order_returned",
+          actor,
+          note: `إرجاع الكمية (+${qty}) للمخزون بعد حذف الطلبية #${order.id}`
+        });
+      });
+    }
+
+    this.state.orders = this.state.orders.filter(o => o.id !== orderId);
+    this.addSecurityLog("حذف طلبية", actor, "warning", `تم حذف الطلبية #${orderId} (${order.customerName})`);
+    this.saveState();
+    return true;
   }
 
   // Requirement 3: Stock decreases IMMEDIATELY AFTER delivery confirmation by the Delivery Driver (for ALL items in the order)
