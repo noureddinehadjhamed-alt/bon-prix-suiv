@@ -61,19 +61,36 @@ class Store {
     return JSON.parse(JSON.stringify(DEFAULT_DATA));
   }
 
-  saveState() {
+  _saveLocalCache() {
     try {
       localStorage.setItem(this.storageKey, JSON.stringify(this.state));
-      this.notifyListeners();
-      if (!this._isApplyingRemote) {
-        this.syncToCloud();
-      }
     } catch (e) {
-      console.error("Error saving state to localStorage", e);
+      // If localStorage quota is exceeded (many products/images), cache lightweight state without heavy base64 images
+      try {
+        const lightState = {
+          ...this.state,
+          products: (this.state.products || []).map(p => ({
+            ...p,
+            image: (p.image && p.image.startsWith("data:")) ? "" : p.image,
+            images: (p.images || []).filter(img => !img.startsWith("data:"))
+          }))
+        };
+        localStorage.setItem(this.storageKey, JSON.stringify(lightState));
+      } catch (e2) {
+        console.warn("Local cache skipped (cloud holds full data):", e2);
+      }
     }
   }
 
-  // --- Firebase Cloud Sync (Real-time across devices) ---
+  saveState() {
+    this._saveLocalCache();
+    this.notifyListeners();
+    if (!this._isApplyingRemote) {
+      this.syncToCloud();
+    }
+  }
+
+  // --- Firebase Cloud Sync (Real-time across devices + Dedicated Collection for Unlimited Products) ---
   async initCloudSync() {
     if (!window.fbSync || !window.fbSync.db) {
       this.cloudStatus = "offline";
@@ -82,35 +99,78 @@ class Store {
     }
 
     try {
-      const { db, doc, getDoc, setDoc, onSnapshot } = window.fbSync;
+      const { db, doc, getDoc, setDoc, collection, getDocs, onSnapshot } = window.fbSync;
       const stateRef = doc(db, "bon_prix_suiv", "main_state");
+      const productsColRef = collection(db, "bon_prix_suiv_products");
 
+      // 1. Load main state (users, reps, drivers, orders, deliveryRates, etc.)
       const snap = await getDoc(stateRef);
+      let legacyProducts = [];
       if (snap.exists()) {
         const remoteData = snap.data();
+        if (remoteData && Array.isArray(remoteData.products) && remoteData.products.length > 0) {
+          legacyProducts = remoteData.products;
+        }
         if (remoteData && remoteData.users) {
-          this._applyRemoteState(remoteData);
+          this._applyRemoteState(remoteData, true);
         }
       } else {
-        await setDoc(stateRef, JSON.parse(JSON.stringify(this.state)));
+        await this.syncToCloud();
+      }
+
+      // 2. Load unlimited products from dedicated collection (and auto-migrate legacy products if needed)
+      const prodSnaps = await getDocs(productsColRef);
+      if (prodSnaps.empty && legacyProducts.length > 0) {
+        for (const p of legacyProducts) {
+          await setDoc(doc(db, "bon_prix_suiv_products", p.id), JSON.parse(JSON.stringify(p)));
+        }
+        this.state.products = legacyProducts;
+        // Clear legacy products array from main_state so main_state stays lightweight forever
+        await this.syncToCloud();
+      } else if (!prodSnaps.empty) {
+        const loadedProducts = [];
+        prodSnaps.forEach(d => loadedProducts.push(d.data()));
+        loadedProducts.sort((a, b) => (b.createdAt || b.id || "").localeCompare(a.createdAt || a.id || ""));
+        this.state.products = loadedProducts;
+        this._saveLocalCache();
       }
 
       this.cloudStatus = "synced";
       this.notifyListeners();
 
+      // 3. Real-time listener on main_state
       onSnapshot(stateRef, (docSnap) => {
         if (docSnap.exists() && !docSnap.metadata.hasPendingWrites) {
           const remoteData = docSnap.data();
           if (remoteData && remoteData.users) {
-            this._applyRemoteState(remoteData);
+            this._applyRemoteState(remoteData, true);
             this.cloudStatus = "synced";
             this.notifyListeners();
           }
         }
       }, (err) => {
-        console.warn("Firestore snapshot error:", err);
+        console.warn("Firestore main_state snapshot error:", err);
         this.cloudStatus = "offline";
         this.notifyListeners();
+      });
+
+      // 4. Real-time listener on unlimited products collection
+      onSnapshot(productsColRef, (querySnap) => {
+        if (!querySnap.metadata.hasPendingWrites) {
+          const remoteProducts = [];
+          querySnap.forEach(d => remoteProducts.push(d.data()));
+          remoteProducts.sort((a, b) => (b.createdAt || b.id || "").localeCompare(a.createdAt || a.id || ""));
+          this._isApplyingRemote = true;
+          try {
+            this.state.products = remoteProducts;
+            this._saveLocalCache();
+            this.notifyListeners();
+          } finally {
+            this._isApplyingRemote = false;
+          }
+        }
+      }, (err) => {
+        console.warn("Firestore products snapshot error:", err);
       });
     } catch (e) {
       console.warn("Firebase Cloud Sync unavailable, using local storage:", e);
@@ -119,24 +179,15 @@ class Store {
     }
   }
 
-  _applyRemoteState(remoteData) {
+  _applyRemoteState(remoteData, preserveProducts = false) {
     this._isApplyingRemote = true;
     try {
-      const defaultRepEmails = {
-        "USR-002": "fatima.rep@gmail.com",
-        "USR-003": "meriem.rep@gmail.com",
-        "USR-004": "sara.rep@gmail.com"
+      const currentProducts = this.state.products || [];
+      this.state = {
+        ...remoteData,
+        products: preserveProducts ? currentProducts : (remoteData.products || [])
       };
-      if (remoteData && Array.isArray(remoteData.users)) {
-        remoteData.users.forEach(u => {
-          if (!u.email && defaultRepEmails[u.id]) {
-            u.email = defaultRepEmails[u.id];
-            u.authProvider = "google";
-          }
-        });
-      }
-      this.state = remoteData;
-      localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+      this._saveLocalCache();
       if (this.currentUser) {
         const refreshed = this.getUserById(this.currentUser.id);
         if (refreshed) {
@@ -160,12 +211,42 @@ class Store {
     try {
       const { db, doc, setDoc } = window.fbSync;
       const stateRef = doc(db, "bon_prix_suiv", "main_state");
-      await setDoc(stateRef, JSON.parse(JSON.stringify(this.state)));
+      // Store main_state without products array (products live in bon_prix_suiv_products for unlimited capacity!)
+      const payload = JSON.parse(JSON.stringify(this.state));
+      payload.products = [];
+      payload.productsMigratedToCollection = true;
+      await setDoc(stateRef, payload);
       this.cloudStatus = "synced";
       return true;
     } catch (e) {
-      console.warn("Failed to sync to Firestore:", e);
+      console.warn("Failed to sync main_state to Firestore:", e);
       this.cloudStatus = "offline";
+      return false;
+    }
+  }
+
+  async syncProductToCloud(product) {
+    if (!product || !product.id || !window.fbSync || !window.fbSync.db) return false;
+    try {
+      const { db, doc, setDoc } = window.fbSync;
+      const prodRef = doc(db, "bon_prix_suiv_products", product.id);
+      await setDoc(prodRef, JSON.parse(JSON.stringify(product)));
+      this.cloudStatus = "synced";
+      return true;
+    } catch (e) {
+      console.warn("Failed to sync product to Firestore:", e);
+      return false;
+    }
+  }
+
+  async deleteProductFromCloud(productId) {
+    if (!productId || !window.fbSync || !window.fbSync.db || !window.fbSync.deleteDoc) return false;
+    try {
+      const { db, doc, deleteDoc } = window.fbSync;
+      await deleteDoc(doc(db, "bon_prix_suiv_products", productId));
+      return true;
+    } catch (e) {
+      console.warn("Failed to delete product from Firestore:", e);
       return false;
     }
   }
@@ -650,6 +731,7 @@ class Store {
   getAvailableStock(productId) {
     const p = this.getProductById(productId);
     if (!p) return 0;
+    if (p.unlimitedStock) return 999999;
     return Math.max(0, p.stock - this.getReservedStock(productId));
   }
 
@@ -658,7 +740,7 @@ class Store {
   }
 
   addProduct(product) {
-    const id = "PRD-" + Math.floor(100 + Math.random() * 900);
+    const id = "PRD-" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(10 + Math.random() * 90);
     const costPrice = parseFloat(product.costPrice) || 0;
     const basePrice = parseFloat(product.basePrice) || 0;
     const defaultImg = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
@@ -677,13 +759,17 @@ class Store {
       costPrice,
       basePrice,
       stock: parseInt(product.stock) || 0,
+      unlimitedStock: Boolean(product.unlimitedStock),
       minStockAlert: parseInt(product.minStockAlert) || 5,
       image: images[0],
       images,
-      description: product.description || ""
+      description: product.description || "",
+      createdAt: new Date().toISOString()
     };
     this.state.products.unshift(newProduct);
-    this.saveState();
+    this._saveLocalCache();
+    this.notifyListeners();
+    this.syncProductToCloud(newProduct);
     return newProduct;
   }
 
@@ -704,12 +790,15 @@ class Store {
       costPrice: updates.costPrice !== undefined ? parseFloat(updates.costPrice) : p.costPrice,
       basePrice: updates.basePrice !== undefined ? parseFloat(updates.basePrice) : p.basePrice,
       stock: updates.stock !== undefined ? parseInt(updates.stock) : p.stock,
+      unlimitedStock: updates.unlimitedStock !== undefined ? Boolean(updates.unlimitedStock) : Boolean(p.unlimitedStock),
       minStockAlert: updates.minStockAlert !== undefined ? parseInt(updates.minStockAlert) : p.minStockAlert,
       image: images[0] || updates.image || p.image,
       images,
       description: updates.description ?? p.description
     });
-    this.saveState();
+    this._saveLocalCache();
+    this.notifyListeners();
+    this.syncProductToCloud(p);
     return true;
   }
 
@@ -733,13 +822,16 @@ class Store {
       actor: "صاحب المتجر (المسير العام)",
       note: `تعديل مخزون يدوي (${delta >= 0 ? '+' + delta : delta}) من صاحب المتجر`
     });
+    this.syncProductToCloud(p);
     this.saveState();
     return true;
   }
 
   deleteProduct(id) {
     this.state.products = this.state.products.filter(p => p.id !== id);
-    this.saveState();
+    this._saveLocalCache();
+    this.notifyListeners();
+    this.deleteProductFromCloud(id);
   }
 
   // --- Delivery Rates Logic (Set by Store Owner: Home & Desk/Office) ---
@@ -945,6 +1037,7 @@ class Store {
     // Check stock availability for each distinct product
     for (const [prodId, totalRequestedQty] of Object.entries(qtyByProduct)) {
       const product = this.getProductById(prodId);
+      if (product.unlimitedStock) continue;
       const reserved = this.getReservedStock(prodId);
       const availableForBooking = Math.max(0, product.stock - reserved);
 
@@ -1090,6 +1183,7 @@ class Store {
     // Validate stock availability (excluding this order's own previous reservation/deduction)
     for (const [prodId, reqQty] of Object.entries(newQtyByProduct)) {
       const product = this.getProductById(prodId);
+      if (product.unlimitedStock) continue;
       const ownPrev = prevQtyByProduct[prodId] || 0;
       const effectiveStock = order.stockDeducted ? (product.stock + ownPrev) : product.stock;
       const otherReserved = Math.max(0, this.getReservedStock(prodId) - (!order.stockDeducted ? ownPrev : 0));
@@ -1124,11 +1218,17 @@ class Store {
     if (order.stockDeducted) {
       prevItems.forEach(it => {
         const p = this.getProductById(it.productId);
-        if (p) p.stock += (parseInt(it.quantity) || 0);
+        if (p && !p.unlimitedStock) {
+          p.stock += (parseInt(it.quantity) || 0);
+          this.syncProductToCloud(p);
+        }
       });
       resolvedItems.forEach(it => {
         const p = this.getProductById(it.productId);
-        if (p) p.stock = Math.max(0, p.stock - it.quantity);
+        if (p && !p.unlimitedStock) {
+          p.stock = Math.max(0, p.stock - it.quantity);
+          this.syncProductToCloud(p);
+        }
       });
     }
 
@@ -1195,7 +1295,10 @@ class Store {
         if (!product) return;
         const before = product.stock;
         const qty = parseInt(it.quantity) || 1;
-        product.stock += qty;
+        if (!product.unlimitedStock) {
+          product.stock += qty;
+          this.syncProductToCloud(product);
+        }
         this.state.stockMovements.unshift({
           id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
           date: new Date().toISOString().replace("T", " ").slice(0, 16),
@@ -1240,7 +1343,10 @@ class Store {
         if (!product) return;
         const stockBefore = product.stock;
         const qty = parseInt(it.quantity) || 1;
-        product.stock = Math.max(0, product.stock - qty);
+        if (!product.unlimitedStock) {
+          product.stock = Math.max(0, product.stock - qty);
+          this.syncProductToCloud(product);
+        }
         const stockAfter = product.stock;
         if (idx === 0) {
           firstBefore = stockBefore;
@@ -1332,7 +1438,10 @@ class Store {
         if (!product) return;
         const before = product.stock;
         const qty = parseInt(it.quantity) || 1;
-        product.stock += qty;
+        if (!product.unlimitedStock) {
+          product.stock += qty;
+          this.syncProductToCloud(product);
+        }
         this.state.stockMovements.unshift({
           id: "MOV-" + Math.floor(1000 + Math.random() * 9000),
           date: new Date().toISOString().replace("T", " ").slice(0, 16),
@@ -1456,8 +1565,8 @@ class Store {
       }
     });
 
-    const lowStockCount = products.filter(p => p.stock <= (p.minStockAlert || 5) && p.stock > 0).length;
-    const outOfStockCount = products.filter(p => p.stock === 0).length;
+    const lowStockCount = products.filter(p => !p.unlimitedStock && p.stock <= (p.minStockAlert || 5) && p.stock > 0).length;
+    const outOfStockCount = products.filter(p => !p.unlimitedStock && p.stock === 0).length;
     const pendingUsersCount = this.getPendingUsers().length;
 
     const totalPaidPayouts = (this.state.payouts || []).reduce((sum, p) => sum + (p.amount || 0), 0);

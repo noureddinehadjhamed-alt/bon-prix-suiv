@@ -1435,13 +1435,15 @@ function renderAdminProducts() {
                   </button>
                 ` : ''}
                 <span class="absolute bottom-2.5 right-2.5 text-xs font-bold px-2.5 py-1 rounded-lg ${
-                  p.stock === 0
+                  p.unlimitedStock
+                    ? 'bg-blue-600 text-white'
+                    : p.stock === 0
                     ? 'bg-red-600 text-white'
                     : p.stock <= (p.minStockAlert || 5)
                     ? 'bg-amber-500 text-white'
                     : 'bg-emerald-600 text-white'
                 }">
-                  ${p.stock === 0 ? 'نفد من المخزن' : `المتوفر: ${p.stock} قطعة`}
+                  ${p.unlimitedStock ? '∞ كمية غير محدودة' : (p.stock === 0 ? 'نفد من المخزن' : `المتوفر: ${p.stock} قطعة`)}
                 </span>
               </div>
               ${(p.images && p.images.length > 1) ? `
@@ -2049,7 +2051,7 @@ function renderRepOrderItemRowHtml(products, isFirst = false) {
       <div class="grid grid-cols-2 gap-2.5">
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">الكمية:</label>
-          <input type="number" value="1" min="1" max="50" oninput="updateRepProfitCalculator()" required class="rep-item-qty w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 outline-none focus:border-pink-500" />
+          <input type="number" value="1" min="1" oninput="updateRepProfitCalculator()" required class="rep-item-qty w-full text-xs bg-white border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 outline-none focus:border-pink-500" />
         </div>
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">سعر البيع للقطعة (فوق المرجعي):</label>
@@ -2353,9 +2355,9 @@ function renderRepCatalog(rep) {
                   </button>
                 ` : ''}
                 <span class="absolute bottom-2.5 right-2.5 text-xs font-bold px-2.5 py-0.5 rounded-lg ${
-                  p.stock === 0 ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white'
+                  p.unlimitedStock ? 'bg-blue-600 text-white' : (p.stock === 0 ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white')
                 }">
-                  ${p.stock === 0 ? 'غير متوفر' : `متوفر: ${p.stock} قطعة`}
+                  ${p.unlimitedStock ? '∞ متوفر باستمرار' : (p.stock === 0 ? 'غير متوفر' : `متوفر: ${p.stock} قطعة`)}
                 </span>
               </div>
               ${(p.images && p.images.length > 1) ? `
@@ -2379,14 +2381,14 @@ function renderRepCatalog(rep) {
             <div class="p-3 bg-slate-50 border-t border-slate-100">
               <button 
                 onclick="prepareRepOrderWithProduct('${p.id}')" 
-                ${p.stock === 0 ? 'disabled' : ''}
+                ${(!p.unlimitedStock && p.stock === 0) ? 'disabled' : ''}
                 class="w-full text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                  p.stock === 0
+                  (!p.unlimitedStock && p.stock === 0)
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     : 'bg-pink-600 hover:bg-pink-700 text-white shadow-sm'
                 }"
               >
-                ${p.stock === 0 ? 'نفد من المخزن' : 'بيع هذا المنتج وتسجيل طلب 🛍️'}
+                ${(!p.unlimitedStock && p.stock === 0) ? 'نفد من المخزن' : 'بيع هذا المنتج وتسجيل طلب 🛍️'}
               </button>
             </div>
           </div>
@@ -2837,6 +2839,10 @@ function openAddProductModal() {
             <div>
               <label class="block font-bold text-slate-700 mb-1">الكمية الأولية بالمخزن:</label>
               <input type="number" id="prd-stock" required value="10" min="0" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600 font-bold" />
+              <label class="inline-flex items-center gap-1.5 mt-1.5 cursor-pointer text-[11px] font-bold text-blue-700">
+                <input type="checkbox" id="prd-unlimited-stock" class="accent-blue-600" />
+                <span>كمية غير محدودة (∞)</span>
+              </label>
             </div>
 
             <div>
@@ -2998,6 +3004,7 @@ function handleSaveProduct(e) {
   const costPrice = document.getElementById("prd-cost-price").value;
   const basePrice = document.getElementById("prd-base-price").value;
   const stock = document.getElementById("prd-stock").value;
+  const unlimitedStock = document.getElementById("prd-unlimited-stock") ? document.getElementById("prd-unlimited-stock").checked : false;
   const category = document.getElementById("prd-category").value || "عام";
   const minStockAlert = document.getElementById("prd-min-alert").value;
   const extraUrl = document.getElementById("prd-image").value.trim();
@@ -3006,7 +3013,7 @@ function handleSaveProduct(e) {
   const image = images[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
   const description = document.getElementById("prd-desc").value;
 
-  window.store.addProduct({ name, costPrice, basePrice, stock, category, minStockAlert, image, images: images.length ? images : [image], description });
+  window.store.addProduct({ name, costPrice, basePrice, stock, unlimitedStock, category, minStockAlert, image, images: images.length ? images : [image], description });
   modalProductImages = [];
   closeModal();
   showToast(`تمت إضافة المنتج للمخزون مع ${Math.max(1, images.length)} صورة بنجاح ✨`);
@@ -3052,6 +3059,10 @@ function openEditProductModal(id) {
             <div>
               <label class="block font-bold text-slate-700 mb-1">الكمية بالمخزن:</label>
               <input type="number" id="edit-prd-stock" value="${p.stock}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:border-red-600 font-bold" />
+              <label class="inline-flex items-center gap-1.5 mt-1.5 cursor-pointer text-[11px] font-bold text-blue-700">
+                <input type="checkbox" id="edit-prd-unlimited-stock" ${p.unlimitedStock ? 'checked' : ''} class="accent-blue-600" />
+                <span>كمية غير محدودة (∞)</span>
+              </label>
             </div>
             <div>
               <label class="block font-bold text-slate-700 mb-1">التصنيف / الصنف:</label>
@@ -3118,12 +3129,13 @@ function handleUpdateProduct(e, id) {
   const costPrice = document.getElementById("edit-prd-cost").value;
   const basePrice = document.getElementById("edit-prd-base").value;
   const stock = document.getElementById("edit-prd-stock").value;
+  const unlimitedStock = document.getElementById("edit-prd-unlimited-stock") ? document.getElementById("edit-prd-unlimited-stock").checked : false;
   const category = document.getElementById("edit-prd-cat").value;
   const extraUrl = document.getElementById("edit-prd-image") ? document.getElementById("edit-prd-image").value.trim() : "";
   const images = [...modalProductImages];
   if (extraUrl) images.push(extraUrl);
 
-  window.store.updateProduct(id, { name, costPrice, basePrice, stock, category, image: images[0], images });
+  window.store.updateProduct(id, { name, costPrice, basePrice, stock, unlimitedStock, category, image: images[0], images });
   modalProductImages = [];
   closeModal();
   showToast("تم تحديث بيانات المنتج والصور بنجاح ✓");
