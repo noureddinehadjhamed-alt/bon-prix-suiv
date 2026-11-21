@@ -637,9 +637,21 @@ class Store {
     const user = this.getUserById(userId);
     if (user) {
       this.addSecurityLog("حذف حساب مستخدم", `${user.name} (${user.phone})`, "warning", "تم إزالة الحساب من النظام");
+      this.state.reps = (this.state.reps || []).filter(r => r.userId !== userId && r.id !== user.linkedId);
+      this.state.drivers = (this.state.drivers || []).filter(d => d.userId !== userId && d.id !== user.linkedId);
     }
     this.state.users = this.state.users.filter(u => u.id !== userId);
     this.saveState();
+  }
+
+  deleteRep(repId) {
+    const rep = this.getRepById(repId);
+    if (!rep) return false;
+    this.state.reps = (this.state.reps || []).filter(r => r.id !== repId);
+    this.state.users = (this.state.users || []).filter(u => u.id !== rep.userId && u.linkedId !== repId);
+    this.addSecurityLog("حذف مندوبة من تبويب المندوبات", `${rep.name} (${rep.phone})`, "warning", "تم حذف المندوبة وحساب دخولها من النظام");
+    this.saveState();
+    return true;
   }
 
   // Change own password & PIN (for Sales Rep, Driver, or Admin)
@@ -739,10 +751,46 @@ class Store {
     return this.state.stockMovements || [];
   }
 
+  getStoreSettings() {
+    if (!this.state.storeSettings) {
+      this.state.storeSettings = {
+        storeName: "Bon Prix Suiv",
+        whatsappPhone: "0550000000",
+        fbPixelId: "",
+        tiktokPixelId: ""
+      };
+    }
+    return this.state.storeSettings;
+  }
+
+  updateStoreSettings(updates) {
+    const current = this.getStoreSettings();
+    this.state.storeSettings = {
+      ...current,
+      storeName: (updates.storeName || current.storeName).trim(),
+      whatsappPhone: (updates.whatsappPhone || current.whatsappPhone).trim(),
+      fbPixelId: (updates.fbPixelId !== undefined ? updates.fbPixelId : current.fbPixelId).trim(),
+      tiktokPixelId: (updates.tiktokPixelId !== undefined ? updates.tiktokPixelId : current.tiktokPixelId).trim()
+    };
+    this.saveState();
+    return this.state.storeSettings;
+  }
+
+  updateRepStoreMargin(repId, margin) {
+    const rep = this.getRepById(repId);
+    if (!rep) return false;
+    rep.storeMargin = Math.max(0, parseFloat(margin) || 0);
+    this.saveState();
+    return true;
+  }
+
   addProduct(product) {
     const id = "PRD-" + Date.now().toString(36).toUpperCase().slice(-5) + Math.floor(10 + Math.random() * 90);
     const costPrice = parseFloat(product.costPrice) || 0;
     const basePrice = parseFloat(product.basePrice) || 0;
+    const storePrice = (product.storePrice !== undefined && product.storePrice !== "")
+      ? parseFloat(product.storePrice)
+      : basePrice;
     const defaultImg = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
 
     let images = Array.isArray(product.images)
@@ -758,6 +806,7 @@ class Store {
       category: product.category || "عام",
       costPrice,
       basePrice,
+      storePrice,
       stock: parseInt(product.stock) || 0,
       unlimitedStock: Boolean(product.unlimitedStock),
       minStockAlert: parseInt(product.minStockAlert) || 5,
@@ -789,6 +838,7 @@ class Store {
       category: updates.category ?? p.category,
       costPrice: updates.costPrice !== undefined ? parseFloat(updates.costPrice) : p.costPrice,
       basePrice: updates.basePrice !== undefined ? parseFloat(updates.basePrice) : p.basePrice,
+      storePrice: updates.storePrice !== undefined && updates.storePrice !== "" ? parseFloat(updates.storePrice) : (p.storePrice ?? p.basePrice),
       stock: updates.stock !== undefined ? parseInt(updates.stock) : p.stock,
       unlimitedStock: updates.unlimitedStock !== undefined ? Boolean(updates.unlimitedStock) : Boolean(p.unlimitedStock),
       minStockAlert: updates.minStockAlert !== undefined ? parseInt(updates.minStockAlert) : p.minStockAlert,

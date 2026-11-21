@@ -9,6 +9,178 @@ let deliverySearchQuery = "";
 let userSearchQuery = "";
 let productSearchQuery = "";
 let productCategoryFilter = "all";
+let cartItems = []; // [{ productId, quantity }]
+
+function getCartCount() {
+  return cartItems.reduce((sum, it) => sum + (parseInt(it.quantity) || 0), 0);
+}
+
+function getCartItemQty(productId) {
+  const found = cartItems.find(it => it.productId === productId);
+  return found ? found.quantity : 0;
+}
+
+function addToCart(productId) {
+  const p = window.store.getProductById(productId);
+  if (!p) return;
+  const avail = window.store.getAvailableStock(productId);
+  const existing = cartItems.find(it => it.productId === productId);
+  if (existing) {
+    if (!p.unlimitedStock && existing.quantity >= avail) {
+      showToast(`لا تتوفر كمية إضافية من "${p.name}" (المتاح: ${avail})`, "error");
+      return;
+    }
+    existing.quantity += 1;
+  } else {
+    if (!p.unlimitedStock && avail < 1) {
+      showToast(`المنتج "${p.name}" غير متوفر حالياً بالمخزون!`, "error");
+      return;
+    }
+    cartItems.push({ productId, quantity: 1 });
+  }
+  showToast(`تمت إضافة "${p.name}" إلى السلة 🛒`);
+  renderApp();
+}
+
+function updateCartQty(productId, delta) {
+  const p = window.store.getProductById(productId);
+  const idx = cartItems.findIndex(it => it.productId === productId);
+  if (idx === -1) return;
+  const nextQty = cartItems[idx].quantity + delta;
+  if (nextQty <= 0) {
+    cartItems.splice(idx, 1);
+  } else {
+    const avail = window.store.getAvailableStock(productId);
+    if (p && !p.unlimitedStock && nextQty > avail) {
+      showToast(`الحد الأقصى المتاح من "${p.name}" هو ${avail}`, "error");
+      return;
+    }
+    cartItems[idx].quantity = nextQty;
+  }
+  renderApp();
+  if (document.getElementById("cart-modal-root")) {
+    openCartModal();
+  }
+}
+
+function removeFromCart(productId) {
+  cartItems = cartItems.filter(it => it.productId !== productId);
+  renderApp();
+  if (document.getElementById("cart-modal-root")) {
+    openCartModal();
+  }
+}
+
+function clearCart() {
+  cartItems = [];
+  closeModal();
+  showToast("تم إفراغ السلة 🗑️");
+  renderApp();
+}
+
+function openCartModal() {
+  const modal = document.getElementById("modal-container");
+  if (!modal) return;
+  const currentUser = window.store.getCurrentUser();
+  const isAdmin = currentUser && currentUser.role === "admin";
+
+  // Resolve valid products in cart
+  const resolved = cartItems
+    .map(it => ({ ...it, product: window.store.getProductById(it.productId) }))
+    .filter(it => it.product);
+
+  const totalBase = resolved.reduce((s, it) => s + ((it.product.basePrice || 0) * it.quantity), 0);
+
+  modal.innerHTML = `
+    <div id="cart-modal-root" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="text-sm font-black text-slate-900">🛒 سلة المنتجات المختارة (${getCartCount()})</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+        </div>
+
+        ${resolved.length === 0 ? `
+          <div class="py-8 text-center text-slate-400 text-xs space-y-2">
+            <span class="text-3xl block">🛒</span>
+            <p>السلة فارغة حالياً.</p>
+            <p class="text-[11px]">اضغط على «أضف للسلة» من قائمة المخزون أو الكتالوج لاختيار عدة منتجات في طلبية واحدة.</p>
+          </div>
+        ` : `
+          <div class="space-y-2.5">
+            ${resolved.map(it => `
+              <div class="flex items-center justify-between gap-2.5 p-2.5 rounded-2xl bg-slate-50 border border-slate-200">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <img src="${it.product.image}" class="w-12 h-12 rounded-xl object-cover shrink-0 border border-slate-200" alt="${it.product.name}" />
+                  <div class="min-w-0">
+                    <div class="font-bold text-slate-900 text-xs truncate">${it.product.name}</div>
+                    <div class="text-[11px] text-slate-500">السعر المرجعي: <strong>${(it.product.basePrice || 0).toLocaleString()} دج</strong></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button" onclick="updateCartQty('${it.productId}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-xs">-</button>
+                  <span class="font-black text-xs px-1">${it.quantity}</span>
+                  <button type="button" onclick="updateCartQty('${it.productId}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-xs">+</button>
+                  <button type="button" onclick="removeFromCart('${it.productId}')" title="إزالة" class="p-1 text-red-500 hover:bg-red-50 rounded-lg text-xs">✕</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-between text-xs font-bold">
+            <span class="text-blue-900">مجموع السعر المرجعي للمنتجات:</span>
+            <span class="text-blue-700 font-black">${totalBase.toLocaleString()} دج</span>
+          </div>
+
+          <div class="flex flex-col gap-2 pt-1">
+            <button type="button" onclick="checkoutCartToOrder()" class="w-full py-3 rounded-2xl ${isAdmin ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'} text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2">
+              <span>✅</span>
+              <span>إتمام حجز الطلبية بمنتجات السلة (${resolved.length} منتج)</span>
+            </button>
+            <button type="button" onclick="clearCart()" class="w-full py-2 text-red-500 hover:text-red-700 text-xs font-bold">
+              إفراغ السلة
+            </button>
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function checkoutCartToOrder() {
+  const currentUser = window.store.getCurrentUser();
+  if (!currentUser || cartItems.length === 0) return;
+
+  const itemsSnapshot = [...cartItems];
+  closeModal();
+
+  if (currentUser.role === "admin") {
+    openAdminOrderModal(itemsSnapshot);
+    return;
+  }
+
+  // Sales Rep: switch to newOrder and populate all cart items
+  switchTab("newOrder");
+  setTimeout(() => {
+    const container = document.getElementById("rep-order-items-container");
+    if (!container) return;
+    const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
+    container.innerHTML = itemsSnapshot.map((_, idx) => renderRepOrderItemRowHtml(products, idx === 0)).join('');
+    const rows = container.querySelectorAll(".rep-order-item-row");
+    itemsSnapshot.forEach((ci, idx) => {
+      const row = rows[idx];
+      if (!row) return;
+      const sel = row.querySelector(".rep-item-product");
+      const qtyEl = row.querySelector(".rep-item-qty");
+      if (sel) {
+        sel.value = ci.productId;
+        onRepItemProductChange(sel);
+      }
+      if (qtyEl) qtyEl.value = ci.quantity;
+    });
+    updateRepProfitCalculator();
+    showToast(`تم نقل ${itemsSnapshot.length} منتج من السلة إلى نموذج الطلبية 🛒`);
+  }, 100);
+}
 
 function getProductCategories(products) {
   const map = new Map();
@@ -728,6 +900,15 @@ function renderHeader(currentUser) {
               </span>
             </div>
 
+            <!-- Shopping Cart Button (for Store Owner & Sales Rep) -->
+            ${(currentUser.role === 'admin' || currentUser.role === 'rep') ? `
+              <button onclick="openCartModal()" title="سلة المنتجات المختارة" class="relative px-2.5 py-1.5 ${getCartCount() > 0 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'} rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
+                <span>🛒</span>
+                <span class="hidden sm:inline">السلة</span>
+                <span class="${getCartCount() > 0 ? 'bg-white text-blue-700' : 'bg-slate-200 text-slate-700'} text-[10px] px-1.5 py-0.5 rounded-full font-black">${getCartCount()}</span>
+              </button>
+            ` : ''}
+
             <!-- Change Password & PIN Button (Available for Rep, Driver, and Admin) -->
             <button onclick="openChangePasswordModal()" title="تغيير كلمة السر ورمز PIN" class="p-2 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-1 text-xs font-bold border border-slate-200">
               <i data-lucide="key-round" class="w-4 h-4"></i>
@@ -780,6 +961,12 @@ function renderAdminView(currentUser) {
         </div>
         
         <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <!-- Storefront & Ad Pixel Settings Button -->
+          <button onclick="openStorefrontSettingsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
+            <span>🌐</span>
+            <span>المتجر والتمويل</span>
+          </button>
+
           <!-- Add Store Owner Direct Order Button (Requirement 3: طلبات صاحب المتجر) -->
           <button onclick="openAdminOrderModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
             <i data-lucide="shopping-cart" class="w-4 h-4"></i>
@@ -1495,23 +1682,47 @@ function renderAdminProducts() {
               </div>
             </div>
 
-            <!-- Footer Quick Stock Adjust -->
-            <div class="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs text-slate-500 font-medium">المخزون:</span>
-                <button onclick="quickAdjustStock('${p.id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-slate-700 text-sm flex items-center justify-center">-</button>
-                <span class="text-xs font-extrabold px-1.5">${p.stock}</span>
-                <button onclick="quickAdjustStock('${p.id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-slate-700 text-sm flex items-center justify-center">+</button>
+            <!-- Footer Quick Stock Adjust & Add to Cart -->
+            <div class="p-3 bg-slate-50 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs text-slate-500 font-medium">المخزون:</span>
+                  <button onclick="quickAdjustStock('${p.id}', -1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-slate-700 text-sm flex items-center justify-center">-</button>
+                  <span class="text-xs font-extrabold px-1.5">${p.stock}</span>
+                  <button onclick="quickAdjustStock('${p.id}', 1)" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 font-bold text-slate-700 text-sm flex items-center justify-center">+</button>
+                </div>
+
+                <div class="flex items-center gap-1">
+                  <button onclick="openEditProductModal('${p.id}')" title="تعديل المنتج والأسعار" class="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                  </button>
+                  <button onclick="confirmDeleteProduct('${p.id}')" title="حذف" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
               </div>
 
-              <div class="flex items-center gap-1">
-                <button onclick="openEditProductModal('${p.id}')" title="تعديل المنتج والأسعار" class="p-1.5 text-slate-500 hover:text-red-600 rounded-lg hover:bg-red-50">
-                  <i data-lucide="edit-3" class="w-4 h-4"></i>
-                </button>
-                <button onclick="confirmDeleteProduct('${p.id}')" title="حذف" class="p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50">
-                  <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-              </div>
+              ${(() => {
+                const inCart = getCartItemQty(p.id);
+                const disabled = !p.unlimitedStock && window.store.getAvailableStock(p.id) <= 0;
+                if (inCart > 0) {
+                  return `
+                    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-2.5 py-1.5 text-xs">
+                      <span class="font-bold text-blue-800">🛒 في السلة (${inCart})</span>
+                      <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="updateCartQty('${p.id}', -1)" class="w-6 h-6 rounded-lg bg-white border border-blue-200 font-bold text-blue-700">-</button>
+                        <button type="button" onclick="updateCartQty('${p.id}', 1)" class="w-6 h-6 rounded-lg bg-white border border-blue-200 font-bold text-blue-700">+</button>
+                        <button type="button" onclick="openCartModal()" class="px-2 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">عرض السلة</button>
+                      </div>
+                    </div>
+                  `;
+                }
+                return `
+                  <button type="button" onclick="addToCart('${p.id}')" ${disabled ? 'disabled' : ''} class="w-full py-1.5 rounded-xl text-xs font-bold transition-all ${disabled ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'}">
+                    ${disabled ? 'غير متاح للحجز' : '🛒 أضف إلى السلة'}
+                  </button>
+                `;
+              })()}
             </div>
 
           </div>
@@ -1862,6 +2073,10 @@ function renderAdminReps() {
                   <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
                   تسجيل دفعة أرباح
                 </button>
+                <button onclick="confirmDeleteRep('${r.id}', '${r.name.replace(/'/g, "\\'")}')" title="حذف المندوبة نهائياً" class="px-3 py-2 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1">
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  <span>حذف</span>
+                </button>
               </div>
 
             </div>
@@ -1974,11 +2189,17 @@ function renderRepView(currentUser) {
             <p class="text-xs text-pink-100 mt-1">سعر المتجر هو سعر الجملة المعتمد لكِ، ويمكنكِ إضافة هامش ربحكِ في السعر النهائي للزبون.</p>
           </div>
 
-          <!-- Fast Add Order Button -->
-          <button onclick="switchTab('newOrder')" class="bg-white text-pink-700 hover:bg-pink-50 font-extrabold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
-            <i data-lucide="plus-circle" class="w-5 h-5"></i>
-            تسجيل طلبية زبون جديدة
-          </button>
+          <!-- Fast Add Order & Personal Storefront Link Buttons -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="openRepStoreLinkModal('${rep.id}')" class="bg-slate-900/90 hover:bg-slate-900 text-white font-extrabold text-xs px-3.5 py-3 rounded-2xl shadow-lg flex items-center justify-center gap-1.5 transition-transform active:scale-95">
+              <span>🌐</span>
+              <span>رابط متجري الإلكتروني</span>
+            </button>
+            <button onclick="switchTab('newOrder')" class="bg-white text-pink-700 hover:bg-pink-50 font-extrabold text-xs sm:text-sm px-4 py-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+              <i data-lucide="plus-circle" class="w-5 h-5"></i>
+              تسجيل طلبية زبون جديدة
+            </button>
+          </div>
         </div>
 
         <!-- Rep Financial Cards -->
@@ -2378,18 +2599,50 @@ function renderRepCatalog(rep) {
               </div>
             </div>
 
-            <div class="p-3 bg-slate-50 border-t border-slate-100">
-              <button 
-                onclick="prepareRepOrderWithProduct('${p.id}')" 
-                ${(!p.unlimitedStock && p.stock === 0) ? 'disabled' : ''}
-                class="w-full text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-                  (!p.unlimitedStock && p.stock === 0)
-                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                    : 'bg-pink-600 hover:bg-pink-700 text-white shadow-sm'
-                }"
-              >
-                ${(!p.unlimitedStock && p.stock === 0) ? 'نفد من المخزن' : 'بيع هذا المنتج وتسجيل طلب 🛍️'}
-              </button>
+            <div class="p-3 bg-slate-50 border-t border-slate-100 space-y-2">
+              ${(() => {
+                const inCart = getCartItemQty(p.id);
+                const disabled = !p.unlimitedStock && window.store.getAvailableStock(p.id) <= 0;
+                if (inCart > 0) {
+                  return `
+                    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-2.5 py-1.5 text-xs">
+                      <span class="font-bold text-blue-800">🛒 في السلة (${inCart})</span>
+                      <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="updateCartQty('${p.id}', -1)" class="w-6 h-6 rounded-lg bg-white border border-blue-200 font-bold text-blue-700">-</button>
+                        <button type="button" onclick="updateCartQty('${p.id}', 1)" class="w-6 h-6 rounded-lg bg-white border border-blue-200 font-bold text-blue-700">+</button>
+                        <button type="button" onclick="openCartModal()" class="px-2 py-1 rounded-lg bg-blue-600 text-white font-bold text-[10px]">إتمام</button>
+                      </div>
+                    </div>
+                  `;
+                }
+                return `
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onclick="addToCart('${p.id}')"
+                      ${disabled ? 'disabled' : ''}
+                      class="text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-1 ${
+                        disabled
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                      }"
+                    >
+                      🛒 أضف للسلة
+                    </button>
+                    <button 
+                      onclick="prepareRepOrderWithProduct('${p.id}')" 
+                      ${disabled ? 'disabled' : ''}
+                      class="text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-1 ${
+                        disabled
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-pink-600 hover:bg-pink-700 text-white shadow-xs'
+                      }"
+                    >
+                      ${disabled ? 'نفد' : 'طلب مباشر 🛍️'}
+                    </button>
+                  </div>
+                `;
+              })()}
             </div>
           </div>
         `).join('')}
@@ -2823,6 +3076,18 @@ function openAddProductModal() {
               </div>
             </div>
 
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">
+                سعر البيع في المتجر العام للزبون (دج - اختياري):
+              </label>
+              <input
+                type="number"
+                id="prd-store-price"
+                placeholder="اتركه فارغاً لاستخدام السعر المرجعي"
+                class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-blue-700 focus:border-red-600"
+              />
+            </div>
+
             <div class="p-2.5 bg-white rounded-xl border border-red-100 flex items-center justify-between">
               <div>
                 <span class="text-[10px] text-slate-500 block">ربحك الصافي للقطعة (التاجر):</span>
@@ -3003,6 +3268,8 @@ function handleSaveProduct(e) {
   const name = document.getElementById("prd-name").value;
   const costPrice = document.getElementById("prd-cost-price").value;
   const basePrice = document.getElementById("prd-base-price").value;
+  const storePriceEl = document.getElementById("prd-store-price");
+  const storePrice = storePriceEl ? storePriceEl.value : "";
   const stock = document.getElementById("prd-stock").value;
   const unlimitedStock = document.getElementById("prd-unlimited-stock") ? document.getElementById("prd-unlimited-stock").checked : false;
   const category = document.getElementById("prd-category").value || "عام";
@@ -3013,7 +3280,7 @@ function handleSaveProduct(e) {
   const image = images[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80";
   const description = document.getElementById("prd-desc").value;
 
-  window.store.addProduct({ name, costPrice, basePrice, stock, unlimitedStock, category, minStockAlert, image, images: images.length ? images : [image], description });
+  window.store.addProduct({ name, costPrice, basePrice, storePrice, stock, unlimitedStock, category, minStockAlert, image, images: images.length ? images : [image], description });
   modalProductImages = [];
   closeModal();
   showToast(`تمت إضافة المنتج للمخزون مع ${Math.max(1, images.length)} صورة بنجاح ✨`);
@@ -3052,6 +3319,10 @@ function openEditProductModal(id) {
                 <label class="block font-bold text-slate-700 mb-1">سعر بيعك (للمندوبة):</label>
                 <input type="number" id="edit-prd-base" value="${p.basePrice}" required class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-extrabold text-red-700" />
               </div>
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">سعر البيع في المتجر العام للزبون (دج):</label>
+              <input type="number" id="edit-prd-store" value="${p.storePrice ?? p.basePrice}" class="w-full bg-white border border-slate-200 rounded-xl p-2.5 outline-none font-bold text-blue-700" />
             </div>
           </div>
 
@@ -3128,6 +3399,8 @@ function handleUpdateProduct(e, id) {
   const name = document.getElementById("edit-prd-name").value;
   const costPrice = document.getElementById("edit-prd-cost").value;
   const basePrice = document.getElementById("edit-prd-base").value;
+  const storePriceEl = document.getElementById("edit-prd-store");
+  const storePrice = storePriceEl ? storePriceEl.value : "";
   const stock = document.getElementById("edit-prd-stock").value;
   const unlimitedStock = document.getElementById("edit-prd-unlimited-stock") ? document.getElementById("edit-prd-unlimited-stock").checked : false;
   const category = document.getElementById("edit-prd-cat").value;
@@ -3135,7 +3408,7 @@ function handleUpdateProduct(e, id) {
   const images = [...modalProductImages];
   if (extraUrl) images.push(extraUrl);
 
-  window.store.updateProduct(id, { name, costPrice, basePrice, stock, unlimitedStock, category, image: images[0], images });
+  window.store.updateProduct(id, { name, costPrice, basePrice, storePrice, stock, unlimitedStock, category, image: images[0], images });
   modalProductImages = [];
   closeModal();
   showToast("تم تحديث بيانات المنتج والصور بنجاح ✓");
@@ -3515,6 +3788,7 @@ function handleRepSubmitOrder(e, repId) {
       customerNotes
     });
 
+    cartItems = [];
     showToast(`تم تسجيل الطلبية #${order.id} (${items.length} منتج) بنجاح وإرسالها للتوصيل 🚚`);
     switchTab("myOrders");
   } catch (err) {
@@ -3531,6 +3805,13 @@ function prepareRepOrderWithProduct(productId) {
       onRepItemProductChange(firstSelect);
     }
   }, 100);
+}
+
+function confirmDeleteRep(repId, repName) {
+  if (confirm(`هل أنت متأكد من حذف المندوبة (${repName}) نهائياً من قائمة المندوبات وإلغاء حساب دخولها؟`)) {
+    window.store.deleteRep(repId);
+    showToast(`تم حذف المندوبة (${repName}) بنجاح 🗑️`);
+  }
 }
 
 function openAddRepModal() {
@@ -4063,10 +4344,11 @@ function onAdminItemProductChange(sel) {
   aoUpdate();
 }
 
-function openAdminOrderModal() {
+function openAdminOrderModal(prefillItems = null) {
   const products = window.store.getProducts().filter(p => window.store.getAvailableStock(p.id) > 0);
   const rates = window.store.getDeliveryRates();
   const drivers = window.store.state.drivers || [];
+  const hasPrefill = Array.isArray(prefillItems) && prefillItems.length > 0;
   const modal = document.getElementById("modal-container");
   modal.innerHTML = `
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
@@ -4079,7 +4361,9 @@ function openAdminOrderModal() {
 
         <form onsubmit="handleAdminSubmitOrder(event)" class="space-y-3 text-xs">
           <div id="ao-items-container" class="space-y-2">
-            ${renderAdminOrderItemRowHtml(products, true)}
+            ${hasPrefill
+              ? prefillItems.map((_, idx) => renderAdminOrderItemRowHtml(products, idx === 0)).join('')
+              : renderAdminOrderItemRowHtml(products, true)}
           </div>
           <button type="button" onclick="addAdminOrderItemRow()" class="w-full py-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/60 hover:bg-blue-50 text-blue-700 font-bold text-xs">
             ➕ إضافة منتج آخر لنفس الطلبية
@@ -4136,6 +4420,22 @@ function openAdminOrderModal() {
       </div>
     </div>
   `;
+
+  if (hasPrefill) {
+    const rows = document.querySelectorAll(".ao-item-row");
+    prefillItems.forEach((ci, idx) => {
+      const row = rows[idx];
+      if (!row) return;
+      const sel = row.querySelector(".ao-item-product");
+      const qtyEl = row.querySelector(".ao-item-qty");
+      if (sel) {
+        sel.value = ci.productId;
+        onAdminItemProductChange(sel);
+      }
+      if (qtyEl) qtyEl.value = ci.quantity;
+    });
+    aoUpdate(false);
+  }
 }
 
 function aoUpdate(wilayaChanged = false) {
@@ -4216,6 +4516,7 @@ function handleAdminSubmitOrder(e) {
       address: document.getElementById("ao-address").value,
       driverId: document.getElementById("ao-driver").value
     });
+    cartItems = [];
     closeModal();
     showToast(`تم حجز طلبية صاحب المتجر #${order.id} وإرسالها لعامل التوصيل 🚚`);
   } catch (err) {
@@ -4295,6 +4596,149 @@ function printOrderReceipt(orderId) {
 function closeModal() {
   const modal = document.getElementById("modal-container");
   if (modal) modal.innerHTML = "";
+}
+
+// ==========================================
+// STOREFRONT LINK, REP STORE LINK & AD PIXEL SETTINGS (المتجر والتمويل)
+// ==========================================
+function getBaseStorefrontUrl() {
+  const href = window.location.href.split("?")[0].split("#")[0];
+  if (href.endsWith("/index.html")) return href.replace(/\/index\.html$/, "/shop.html");
+  if (href.endsWith("/")) return href + "shop.html";
+  return href.substring(0, href.lastIndexOf("/") + 1) + "shop.html";
+}
+
+function copyTextToClipboard(text, successMsg = "تم نسخ الرابط بنجاح 📋") {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast(successMsg)).catch(() => {
+      prompt("انسخ الرابط:", text);
+    });
+  } else {
+    prompt("انسخ الرابط:", text);
+  }
+}
+
+function openStorefrontSettingsModal() {
+  const settings = window.store.getStoreSettings();
+  const shopUrl = getBaseStorefrontUrl();
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl animate-fade-in max-h-[92vh] overflow-y-auto space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="text-sm font-black text-slate-900">🌐 المتجر الإلكتروني وإعدادات التمويل (Pixel)</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+        </div>
+
+        <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 text-xs">
+          <span class="font-bold text-emerald-900 block">🔗 رابط متجرك العام (للإعلانات الممولة وللزبائن):</span>
+          <div class="flex gap-2">
+            <input type="text" readonly value="${shopUrl}" class="flex-1 bg-white border border-emerald-200 rounded-xl px-2.5 py-2 font-mono text-[11px] text-slate-700" />
+            <button type="button" onclick="copyTextToClipboard('${shopUrl}', 'تم نسخ رابط المتجر العام للتمويل 📋')" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shrink-0">نسخ</button>
+          </div>
+          <a href="./shop.html" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-800 font-extrabold hover:underline pt-1">
+            <span>معاينة المتجر الإلكتروني في نافذة جديدة ↗</span>
+          </a>
+        </div>
+
+        <form onsubmit="handleSaveStoreSettings(event)" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">اسم المتجر المعروض للزبائن:</label>
+              <input type="text" id="st-name" value="${settings.storeName || 'Bon Prix Suiv'}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">رقم واتساب خدمة الزبائن:</label>
+              <input type="tel" id="st-whatsapp" value="${settings.whatsappPhone || ''}" placeholder="0550000000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-mono" />
+            </div>
+          </div>
+
+          <div class="p-3 bg-blue-50/70 border border-blue-200 rounded-2xl space-y-2.5">
+            <span class="font-bold text-blue-900 block">📊 أكواد تتبع الإعلانات الممولة (اختياري):</span>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Facebook / Meta Pixel ID:</label>
+              <input type="text" id="st-fb-pixel" value="${settings.fbPixelId || ''}" placeholder="مثلاً: 123456789012345" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-mono" />
+            </div>
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">TikTok Pixel ID:</label>
+              <input type="text" id="st-tt-pixel" value="${settings.tiktokPixelId || ''}" placeholder="مثلاً: CXXXXXXXXXXXX" class="w-full bg-white border border-slate-200 rounded-xl p-2 font-mono" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إغلاق</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-md">حفظ إعدادات المتجر ✓</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleSaveStoreSettings(e) {
+  e.preventDefault();
+  window.store.updateStoreSettings({
+    storeName: document.getElementById("st-name").value,
+    whatsappPhone: document.getElementById("st-whatsapp").value,
+    fbPixelId: document.getElementById("st-fb-pixel").value,
+    tiktokPixelId: document.getElementById("st-tt-pixel").value
+  });
+  closeModal();
+  showToast("تم حفظ إعدادات المتجر وأكواد التمويل بنجاح 🌐");
+}
+
+function openRepStoreLinkModal(repId) {
+  const rep = window.store.getRepById(repId);
+  if (!rep) return;
+  const repShopUrl = `${getBaseStorefrontUrl()}?rep=${encodeURIComponent(rep.id)}`;
+  const currentMargin = rep.storeMargin !== undefined ? rep.storeMargin : 500;
+  const modal = document.getElementById("modal-container");
+  modal.innerHTML = `
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-3">
+      <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl animate-fade-in space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <h3 class="text-sm font-black text-slate-900">🌸 رابط متجركِ الإلكتروني الخاص</h3>
+          <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed">
+          أي زبون يشتري من هذا الرابط تُسجّل طلبيته <strong>باسمكِ تلقائياً</strong> وتظهر في «طلبياتي» مع احتساب ربحكِ فوق السعر المرجعي!
+        </p>
+
+        <div class="p-3 bg-pink-50 border border-pink-200 rounded-2xl space-y-2 text-xs">
+          <span class="font-bold text-pink-900 block">🔗 رابط متجركِ للنشر أو التمويل:</span>
+          <div class="flex gap-2">
+            <input type="text" readonly value="${repShopUrl}" class="flex-1 bg-white border border-pink-200 rounded-xl px-2.5 py-2 font-mono text-[11px] text-slate-700" />
+            <button type="button" onclick="copyTextToClipboard('${repShopUrl}', 'تم نسخ رابط متجركِ الخاص 🌸')" class="px-3 py-2 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl shrink-0">نسخ</button>
+          </div>
+          <a href="./shop.html?rep=${encodeURIComponent(rep.id)}" target="_blank" class="inline-flex items-center gap-1 text-pink-700 font-extrabold hover:underline pt-1">
+            <span>معاينة متجركِ في نافذة جديدة ↗</span>
+          </a>
+        </div>
+
+        <form onsubmit="handleSaveRepStoreMargin(event, '${rep.id}')" class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">هامش ربحكِ المضاف فوق السعر المرجعي في متجركِ (دج للقطعة):</label>
+            <input type="number" id="rep-store-margin" min="0" value="${currentMargin}" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-extrabold text-pink-700" />
+            <span class="text-[10px] text-slate-500 mt-1 block">مثلاً: إذا كان السعر المرجعي 2000 دج وهامش ربحكِ 500 دج، يظهر المنتج في متجركِ بـ 2500 دج.</span>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-bold">إغلاق</button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold shadow-md">حفظ هامش الربح ✓</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function handleSaveRepStoreMargin(e, repId) {
+  e.preventDefault();
+  const margin = document.getElementById("rep-store-margin").value;
+  window.store.updateRepStoreMargin(repId, margin);
+  closeModal();
+  showToast(`تم تحديث هامش ربح متجركِ (+${margin} دج فوق السعر المرجعي) 🌸`);
 }
 
 function confirmResetDemo() {
