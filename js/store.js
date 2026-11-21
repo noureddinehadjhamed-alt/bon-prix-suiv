@@ -637,8 +637,16 @@ class Store {
     const user = this.getUserById(userId);
     if (user) {
       this.addSecurityLog("حذف حساب مستخدم", `${user.name} (${user.phone})`, "warning", "تم إزالة الحساب من النظام");
-      this.state.reps = (this.state.reps || []).filter(r => r.userId !== userId && r.id !== user.linkedId);
-      this.state.drivers = (this.state.drivers || []).filter(d => d.userId !== userId && d.id !== user.linkedId);
+      this.state.reps = (this.state.reps || []).filter(r =>
+        r.userId !== userId &&
+        r.id !== user.linkedId &&
+        (!user.phone || r.phone !== user.phone)
+      );
+      this.state.drivers = (this.state.drivers || []).filter(d =>
+        d.userId !== userId &&
+        d.id !== user.linkedId &&
+        (!user.phone || d.phone !== user.phone)
+      );
     }
     this.state.users = this.state.users.filter(u => u.id !== userId);
     this.saveState();
@@ -648,8 +656,13 @@ class Store {
     const rep = this.getRepById(repId);
     if (!rep) return false;
     this.state.reps = (this.state.reps || []).filter(r => r.id !== repId);
-    this.state.users = (this.state.users || []).filter(u => u.id !== rep.userId && u.linkedId !== repId);
-    this.addSecurityLog("حذف مندوبة من تبويب المندوبات", `${rep.name} (${rep.phone})`, "warning", "تم حذف المندوبة وحساب دخولها من النظام");
+    this.state.users = (this.state.users || []).filter(u => {
+      if (u.role === "admin") return true;
+      if (u.id === rep.userId || u.linkedId === repId) return false;
+      if (rep.phone && u.phone && u.phone === rep.phone) return false;
+      return true;
+    });
+    this.addSecurityLog("حذف حساب مندوبة", `${rep.name} (${rep.phone})`, "warning", "تم حذف المندوبة وحساب دخولها نهائياً من النظام");
     this.saveState();
     return true;
   }

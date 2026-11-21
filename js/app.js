@@ -838,6 +838,10 @@ function handleGoogleLoginSubmit(e, mode = "rep") {
 function renderHeader(currentUser) {
   const pendingUsersCount = window.store.getPendingUsers().length;
   const inquiriesCount = window.store.getDashboardStats().inquiriesCount;
+  const linkedRep = currentUser.role === 'rep'
+    ? window.store.getReps().find(r => r.userId === currentUser.id || r.phone === currentUser.phone)
+    : null;
+  const shopHref = linkedRep ? `./shop.html?rep=${encodeURIComponent(linkedRep.id)}` : `./shop.html`;
 
   return `
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -900,6 +904,12 @@ function renderHeader(currentUser) {
               </span>
             </div>
 
+            <!-- Direct Switch to Storefront Button (الانتقال إلى المتجر الإلكتروني) -->
+            <a href="${shopHref}" title="الانتقال إلى المتجر الإلكتروني" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors flex items-center gap-1.5 text-xs font-extrabold shadow-xs">
+              <span>🛍️</span>
+              <span class="hidden sm:inline">${currentUser.role === 'rep' ? 'الذهاب لمتجري' : 'الذهاب للمتجر'}</span>
+            </a>
+
             <!-- Shopping Cart Button (for Store Owner & Sales Rep) -->
             ${(currentUser.role === 'admin' || currentUser.role === 'rep') ? `
               <button onclick="openCartModal()" title="سلة المنتجات المختارة" class="relative px-2.5 py-1.5 ${getCartCount() > 0 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'} rounded-xl transition-colors flex items-center gap-1.5 text-xs font-bold">
@@ -961,10 +971,16 @@ function renderAdminView(currentUser) {
         </div>
         
         <div class="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <!-- Direct Switch to Storefront -->
+          <a href="./shop.html" class="bg-white hover:bg-slate-100 text-slate-900 text-xs font-extrabold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
+            <span>🛍️</span>
+            <span>فتح المتجر</span>
+          </a>
+
           <!-- Storefront & Ad Pixel Settings Button -->
           <button onclick="openStorefrontSettingsModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all">
             <span>🌐</span>
-            <span>المتجر والتمويل</span>
+            <span>إعدادات المتجر والتمويل</span>
           </button>
 
           <!-- Add Store Owner Direct Order Button (Requirement 3: طلبات صاحب المتجر) -->
@@ -1189,8 +1205,9 @@ function renderAdminUsersTab() {
                       <button onclick="openAdminResetPasswordModal('${u.id}')" title="إعادة تعيين كلمة السر / PIN" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                         <i data-lucide="key-round" class="w-4 h-4"></i>
                       </button>
-                      <button onclick="confirmDeleteUser('${u.id}')" title="إلغاء/حذف الحساب" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                      <button onclick="confirmDeleteUser('${u.id}')" title="حذف حساب المستخدم نهائياً" class="px-2.5 py-1.5 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>حذف الحساب</span>
                       </button>
                     </div>
                   </td>
@@ -2024,9 +2041,9 @@ function renderAdminReps() {
           return `
             <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
               <div>
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center justify-between mb-3 gap-2">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-base">
+                    <div class="w-10 h-10 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-base shrink-0">
                       🌸
                     </div>
                     <div>
@@ -2034,7 +2051,13 @@ function renderAdminReps() {
                       <span class="text-xs text-slate-500 font-mono">${r.phone}</span>
                     </div>
                   </div>
-                  <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-mono">${r.id}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-mono">${r.id}</span>
+                    <button onclick="confirmDeleteRep('${r.id}', '${r.name.replace(/'/g, "\\'")}')" title="حذف حساب المندوبة نهائياً" class="px-2 py-1 bg-red-50 hover:bg-red-600 text-red-600 hover:text-white rounded-lg text-[11px] font-bold flex items-center gap-1 transition-colors">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      <span>حذف الحساب</span>
+                    </button>
+                  </div>
                 </div>
 
                 <p class="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg">${r.notes || 'مندوبة مبيعات'}</p>

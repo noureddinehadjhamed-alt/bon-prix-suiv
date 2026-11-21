@@ -572,6 +572,10 @@ function renderShop() {
         </div>
 
         <div class="flex items-center gap-2">
+          <a href="./index.html" title="الانتقال إلى تطبيق المخزون ومتابعة الطلبيات" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-colors">
+            <span>📦</span>
+            <span class="hidden sm:inline">تطبيق التسيير</span>
+          </a>
           <a href="https://wa.me/213${waPhone.replace(/^0/, '')}" target="_blank" class="hidden sm:inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold border border-emerald-200">
             <span>💬 واتساب</span>
           </a>
